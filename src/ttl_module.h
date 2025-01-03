@@ -16,8 +16,8 @@
 
 #include <Arduino.h>
 #include <digitalWriteFast.h>
-#include "axmc_shared_assets.h"
-#include "module.h"
+#include <axmc_shared_assets.h>
+#include <module.h>
 
 /**
  * @brief Sends or receives Transistor-to-Transistor Logic (TTL) signals using the specified digital pin.
@@ -50,7 +50,9 @@ class TTLModule final : public Module
             kOutputLocked   = 51,  ///< The output ttl pin is in a global locked state and cannot be toggled on or off.
             kInputOn        = 52,  ///< The input ttl pin is receiving a HIGH signal.
             kInputOff       = 53,  ///< The input ttl pin is receiving a LOW signal.
-            kInvalidPinMode = 54   ///< The pin mode (input or output) is not valid for the requested command.
+            kInvalidPinMode = 54,  ///< The pin mode (input or output) is not valid for the requested command.
+            kOutputOn       = 55,  ///< The output ttl pin is set to HIGH.
+            kOutputOff      = 56,  ///< The output ttl pin is set to LOW.
         };
 
         /// Assigns meaningful names to module command byte-codes.
@@ -110,8 +112,16 @@ class TTLModule final : public Module
                 pinModeFast(kPin, OUTPUT);
 
                 // Depending on the class configuration, initializes the pin to the desired state.
-                if (!kStartOn) digitalWriteFast(kPin, LOW);
-                else digitalWriteFast(kPin, HIGH);
+                if (!kStartOn)
+                {
+                    digitalWriteFast(kPin, LOW);
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOff));
+                }
+                else
+                {
+                    digitalWriteFast(kPin, HIGH);
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOn));
+                }
             }
             else pinModeFast(kPin, INPUT);
 
@@ -150,7 +160,11 @@ class TTLModule final : public Module
             {
                 // Toggles the pin to send a HIGH signal. If the pin is successfully set to HIGH, as indicated by the
                 // DigitalWrite returning true, advances the command stage.
-                if (DigitalWrite(kPin, HIGH, true)) AdvanceCommandStage();
+                if (DigitalWrite(kPin, HIGH, true))
+                {
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOn));
+                    AdvanceCommandStage();
+                }
                 else
                 {
                     // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -175,7 +189,11 @@ class TTLModule final : public Module
             {
                 // Once the pulse duration has passed, inactivates the pin by setting it to LOW. Finishes command
                 // execution if inactivation is successful.
-                if (DigitalWrite(kPin, LOW, true)) CompleteCommand();
+                if (DigitalWrite(kPin, LOW, true))
+                {
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOff));
+                    CompleteCommand();
+                }
                 else
                 {
                     // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -199,7 +217,11 @@ class TTLModule final : public Module
             }
 
             // Sets the pin to HIGH and finishes command execution
-            if (DigitalWrite(kPin, HIGH, true)) CompleteCommand();
+            if (DigitalWrite(kPin, HIGH, true))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOn));
+                CompleteCommand();
+            }
             else
             {
                 // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -222,7 +244,11 @@ class TTLModule final : public Module
             }
 
             // Sets the pin to LOW and finishes command execution
-            if (DigitalWrite(kPin, LOW, true)) CompleteCommand();  // Finishes command execution
+            if (DigitalWrite(kPin, LOW, true))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOff));
+                CompleteCommand();  // Finishes command execution
+            }
             else
             {
                 // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,

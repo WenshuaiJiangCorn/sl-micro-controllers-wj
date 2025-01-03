@@ -18,27 +18,29 @@
 #define AXMC_TORQUE_MODULE_H
 
 #include <Arduino.h>
+#include <axmc_shared_assets.h>
 #include <digitalWriteFast.h>
-#include "axmc_shared_assets.h"
-#include "module.h"
+#include <module.h>
 
 /**
  * @brief Monitors the signal sent by the torque sensor through an AD620 microvolt amplifier.
  *
- * This module is specifically designed to work with fine-resolution torque signals that output differential signals
+ * This module is specifically designed to work with fine-resolution torque sensors that output differential signals
  * in the millivolt or microvolt range that is picked up and amplified by the AD620 amplifier. This module works by
  * monitoring an analog input pin for the signal from the AD620 amplifier expected to be zeroed ~ 1.6 V. This way,
- * torque in the CW direction is detected as a positive deflection from baseline, and torque in the CCW direction
+ * torque in the CCW direction is detected as a positive deflection from baseline, and torque in the CW direction
  * is detected as a negative deflection from baseline. The class can be flexibly configured to report torque in either
  * direction and to only report significant torque changes.
  *
  * @tparam kPin the analog pin whose state will be monitored to detect torque's direction and magnitude.
  * @tparam kBaseline the value, in ADC units, for the analog signal sent by the sensor when it detects no torque. This
  * value depends on the zero-point calibration of the AD620 amplifier, and it is used to shift differential bipolar
- * signal of the torque sensor to use a positive integer scale. Signals above baseline are interpreted as ClockWise
- * (CW) torque, and signals below the baseline are interpreted as CounterClockWise (CCW) torque.
+ * signal of the torque sensor to use a positive integer scale. Signals that are originally above the baseline are
+ * interpreted as CounterClockWise (CCW) torque, and signals below the baseline are interpreted as ClockWise (CW)
+ * torque. When the class reports torque to the PC, it further adjusts the torque value to always be between 0 and
+ * Baseline, reporting the direction via the event-code of the message.
  * @tparam kInvertDirection if true, inverts the direction the torque returned by the sensor. By default, the sensor
- * interprets torque in the CW direction as positive and torque in the CCW direction as negative. This flag allows
+ * interprets torque in the CCW direction as positive and torque in the CW direction as negative. This flag allows
  * reversing this relationship, which may be helpful, depending on how the sensor is mounted and wired.
  */
 template <const uint8_t kPin, const uint16_t kBaseline, const bool kInvertDirection = false>
@@ -109,10 +111,10 @@ class TorqueModule final : public Module
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.report_CCW        = true;
             _custom_parameters.report_CW         = true;
-            _custom_parameters.lower_threshold   = 200;    // ~ 0.16 / 0.24 V, depending on CPU voltage rating.
-            _custom_parameters.upper_threshold   = 65535;  // ~ 1.65 / 2.5 V, depending on CPU voltage rating.
-            _custom_parameters.delta_threshold   = 100;    // ~ 0.08 / 0.12 V steps depending on CPU voltage rating.
-            _custom_parameters.average_pool_size = 50;     // Averages 50 pin readouts
+            _custom_parameters.lower_threshold   = 200;   // ~ 0.16 / 0.24 V, depending on CPU voltage rating.
+            _custom_parameters.upper_threshold   = 2046;  // ~ 1.65 / 2.5 V, depending on CPU voltage rating.
+            _custom_parameters.delta_threshold   = 100;   // ~ 0.08 / 0.12 V steps depending on CPU voltage rating.
+            _custom_parameters.average_pool_size = 50;    // Averages 50 pin readouts
 
             return true;
         }
@@ -123,10 +125,10 @@ class TorqueModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                bool report_CCW          = true;   ///< Determines whether to report changes in the CCW direction.
-                bool report_CW           = true;   ///< Determines whether to report changes in the CCW direction.
-                uint16_t lower_threshold = 200;    ///< The lower absolute boundary for signals to be reported to PC.
-                uint16_t upper_threshold = 65535;  ///< The upper absolute boundary for signals to be reported to PC.
+                bool report_CCW          = true;  ///< Determines whether to report changes in the CCW direction.
+                bool report_CW           = true;  ///< Determines whether to report changes in the CCW direction.
+                uint16_t lower_threshold = 200;   ///< The lower absolute boundary for signals to be reported to PC.
+                uint16_t upper_threshold = 2046;  ///< The upper absolute boundary for signals to be reported to PC.
                 uint16_t delta_threshold = 100;  ///< The minimum signal difference between checks to be reported to PC.
                 uint8_t average_pool_size = 50;  ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
@@ -143,7 +145,7 @@ class TorqueModule final : public Module
             // Evaluates the state of the pin. Averages the requested number of readouts to produce the final
             // analog signal value. Note, since we statically configure the controller to use 10-14 bit ADC resolution,
             // this value should not use the full range of the 16-bit unit variable.
-            const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
+            uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
 
             // Calculates the absolute difference between the current signal and the previous readout. This is used
             // to ensure only significant signal changes are reported to the PC. Note, although we are casting both to
@@ -151,42 +153,77 @@ class TorqueModule final : public Module
             // Therefore, it is fine to cast it back to uint16 to avoid unnecessary future casting in the if statements.
             const uint16_t delta = abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout));
 
-            // Prevents reporting signals that are not significantly different from the previous readout value. Also
-            // allows notch, long-pass or short-pass filtering detected signals.
-            if (delta <= _custom_parameters.delta_threshold || signal <= _custom_parameters.lower_threshold ||
-                signal >= _custom_parameters.upper_threshold)
+            // Prevents reporting signals that are not significantly different from the previous readout value.
+            if (delta <= _custom_parameters.delta_threshold)
             {
                 CompleteCommand();
                 return;
             }
 
-            // Otherwise, sends the detected signal to the PC using the event-code to code for the direction and the
+            // Determines the direction of the signal. Signals above the baseline are interpreted as CCW, signals below
+            // baseline as CW. Also rescales the signal as necessary for its value to always mean the same things: 0
+            // is no torque, baseline is maximum torque, regardless of direction.
+            bool cw;
+            if (signal > kBaseline)
+            {
+                // For CCW signals, subtracts the baseline from the signal to ensure the signal is always scaled between
+                // 0 and baseline. CCW torque increases as the level of the signal increases. Therefore, the larger
+                // the signal, the higher the torque.
+                cw     = false ^ kInvertDirection;
+                signal = signal - kBaseline;
+            }
+            else if (signal < kBaseline)
+            {
+                // For CW signals, subtracts the signal from the baseline. CW torque increases as the level of
+                // the signal decreases. Therefore, the smaller the signal, the higher the torque. This rescaling
+                // 'shifts' the signal to increase proportionally to CW torque, from 0 to baseline.
+                cw     = true ^ kInvertDirection;
+                signal = kBaseline - signal;
+            }
+            else
+            {
+                // If the signal is 0, the direction does not really matter
+                cw     = true;
+                signal = 0;
+            }
+
+            // Allows notch, long-pass or short-pass filtering detected signals. Note, the lower threshold is only
+            // applied to the rising phase of the signal, falling phase of the signal is reported regardless of the
+            // lower threshold.
+            if (previous_readout < signal &&
+                (signal <= _custom_parameters.lower_threshold || signal >= _custom_parameters.upper_threshold))
+            {
+                CompleteCommand();
+                return;
+            }
+            if (previous_readout > signal && signal >= _custom_parameters.upper_threshold)
+            {
+                CompleteCommand();
+                return;
+            }
+
+            // Sends the detected signal to the PC using the event-code to code for the direction and the
             // signal value to provide the absolute directional torque value in raw ADC units. Only sends the data if
             // the class is configured to report changes in that direction
-            if (((signal < kBaseline && !kInvertDirection) || (signal > kBaseline && kInvertDirection)) &&
-                _custom_parameters.report_CCW)
+            if (!cw && _custom_parameters.report_CCW)
             {
-                // Non-inverted signals below the baseline and inverted signals above the baseline are interpreted as
-                // CCW torque.
                 SendData(
                     static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
                     axmc_communication_assets::kPrototypes::kOneUint16,
                     signal
                 );
-                previous_readout = signal;  // Overwrites the previous readout with the current signal.
             }
-            else if (((signal > kBaseline && !kInvertDirection) || (signal < kBaseline && kInvertDirection)) &&
-                     _custom_parameters.report_CW)
+            else if (cw && _custom_parameters.report_CW)
             {
                 SendData(
                     static_cast<uint8_t>(kCustomStatusCodes::kCWTorque),
                     axmc_communication_assets::kPrototypes::kOneUint16,
                     signal
                 );
-                previous_readout = signal;  // Overwrites the previous readout with the current signal.
             }
 
             // Completes command execution
+            previous_readout = signal;  // Overwrites the previous readout with the current signal.
             CompleteCommand();
         }
 };

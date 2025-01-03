@@ -15,8 +15,8 @@
 
 #include <Arduino.h>
 #include <digitalWriteFast.h>
-#include "axmc_shared_assets.h"
-#include "module.h"
+#include <axmc_shared_assets.h>
+#include <module.h>
 
 /**
  * @brief Sends digital signals to dispense precise amounts of fluid via the managed solenoid valve.
@@ -55,6 +55,9 @@ class ValveModule final : public Module
         enum class kCustomStatusCodes : uint8_t
         {
             kOutputLocked = 51,  ///< The output pin is in a global locked state and cannot be used to output data.
+            kOpen         = 52,  ///< The valve is currently open.
+            kClosed       = 53,  ///< The valve is currently closed.
+            kCalibrated   = 54,  ///< The valve calibration cycle has been completed.
         };
 
         /// Assigns meaningful names to module command byte-codes.
@@ -64,7 +67,7 @@ class ValveModule final : public Module
             kToggleOn  = 2,  ///< Sets the valve to be permanently open.
             kToggleOff = 3,  ///< Sets the valve to be permanently closed.
             kCalibrate =
-                4  ///< Repeatedly pulses teh valve to map different pulse_durations to dispensed fluid volumes.
+                4  ///< Repeatedly pulses the valve to map different pulse_durations to dispensed fluid volumes.
         };
 
         /// Initializes the class by subclassing the base Module class.
@@ -114,8 +117,16 @@ class ValveModule final : public Module
 
             // Based on the requested initial valve state and the configuration of the valve (normally closed or open),
             // either opens or closes the valve following setup.
-            if (kStartClosed) digitalWriteFast(kPin, kNormallyClosed ? LOW : HIGH);  // Ensures the valve is closed.
-            else digitalWriteFast(kPin, kNormallyClosed ? HIGH : LOW);               // Ensures the valve is open.
+            if (kStartClosed)
+            {
+                digitalWriteFast(kPin, kClose);  // Ensures the valve is closed.
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kClosed));
+            }
+            else
+            {
+                digitalWriteFast(kPin, kOpen);  // Ensures the valve is open.
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
+            }
 
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.pulse_duration    = 10000;  // 10 milliseconds.
@@ -152,7 +163,11 @@ class ValveModule final : public Module
             {
                 // Toggles the pin to send the open signal. If the pin is successfully activated, as indicated by the
                 // DigitalWrite returning true, advances the command stage.
-                if (DigitalWrite(kPin, kOpen, false)) AdvanceCommandStage();
+                if (DigitalWrite(kPin, kOpen, false))
+                {
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
+                    AdvanceCommandStage();
+                }
                 else
                 {
                     // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -177,7 +192,11 @@ class ValveModule final : public Module
             {
                 // Once the pulse duration has passed, inactivates the pin by setting it to Close signal. Finishes
                 // command execution if inactivation is successful.
-                if (DigitalWrite(kPin, kClose, false)) CompleteCommand();
+                if (DigitalWrite(kPin, kClose, false))
+                {
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kClosed));
+                    CompleteCommand();
+                }
                 else
                 {
                     // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -192,7 +211,11 @@ class ValveModule final : public Module
         void Open()
         {
             // Sets the pin to Open signal and finishes command execution
-            if (DigitalWrite(kPin, kOpen, false)) CompleteCommand();
+            if (DigitalWrite(kPin, kOpen, false))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
+                CompleteCommand();
+            }
             else
             {
                 // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -206,7 +229,11 @@ class ValveModule final : public Module
         void Close()
         {
             // Sets the pin to Close signal and finishes command execution
-            if (DigitalWrite(kPin, kClose, false)) CompleteCommand();  // Finishes command execution
+            if (DigitalWrite(kPin, kClose, false))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kClosed));
+                CompleteCommand();  // Finishes command execution
+            }
             else
             {
                 // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -259,6 +286,7 @@ class ValveModule final : public Module
             }
 
             // This command completes after running the requested number of cycles.
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kCalibrated));
             CompleteCommand();
         }
 };

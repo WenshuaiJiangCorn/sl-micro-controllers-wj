@@ -12,7 +12,7 @@ axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 Communication axmc_communication(Serial); // NOLINT(*-interfaces-global-init)
 
 // Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-# define ENCODER
+# define SENSOR
 
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
@@ -21,9 +21,9 @@ Communication axmc_communication(Serial); // NOLINT(*-interfaces-global-init)
 #include "ttl_module.h"
 
 constexpr uint8_t kControllerID = 101;
-TTLModule<33> mesoscope_trigger(1, 2, axmc_communication, DynamicRuntimeParameters);
+TTLModule<33> mesoscope_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
 BreakModule<29, false> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<28, true> reward_valve(5, 2, axmc_communication, DynamicRuntimeParameters);
+ValveModule<28, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve};
 
 #elif defined SENSOR
@@ -34,7 +34,7 @@ Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve};
 constexpr uint8_t kControllerID = 152;
 TTLModule<33> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
 LickModule<15> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
-TorqueModule<16, 2048> torque_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
+TorqueModule<16, 2048> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 
 #elif defined ENCODER

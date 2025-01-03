@@ -15,8 +15,8 @@
 
 #include <Arduino.h>
 #include <digitalWriteFast.h>
-#include "axmc_shared_assets.h"
-#include "module.h"
+#include <axmc_shared_assets.h>
+#include <module.h>
 
 /**
  * @brief Sends Pulse-Width-Modulated (PWM) signals to variably engage the managed break.
@@ -50,6 +50,9 @@ class BreakModule final : public Module
         enum class kCustomStatusCodes : uint8_t
         {
             kOutputLocked = 51,  ///< The break pin is in a global locked state and cannot be used to output signals.
+            kEngaged      = 52,  ///< The break is maximally engaged.
+            kDisengaged   = 53,  ///< The break is completely disengaged.
+            kVariable     = 54,  ///< The break is engaged with variable strength.
         };
 
         /// Assigns meaningful names to module command byte-codes.
@@ -106,8 +109,16 @@ class BreakModule final : public Module
 
             // Based on the requested initial break state and the configuration of the break (normally engaged or not),
             // either engages or disengages the breaks following setup.
-            if (kStartEngaged) digitalWriteFast(kPin, kNormallyEngaged ? LOW : HIGH);  // Ensures the break is engaged.
-            else digitalWriteFast(kPin, kNormallyEngaged ? HIGH : LOW);  // Ensures the break is disengaged.
+            if (kStartEngaged)
+            {
+                digitalWriteFast(kPin, kEngage);  // Ensures the break is engaged.
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kEngaged));
+            }
+            else
+            {
+                digitalWriteFast(kPin, kDisengage);  // Ensures the break is disengaged.
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
+            }
 
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.breaking_strength = 128;  //  50% breaking strength
@@ -136,7 +147,11 @@ class BreakModule final : public Module
         void EnableBreak()
         {
             // Engages the break
-            if (DigitalWrite(kPin, kEngage, false)) CompleteCommand();
+            if (DigitalWrite(kPin, kEngage, false))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kEngaged));
+                CompleteCommand();
+            }
             else
             {
                 // If writing to Action pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -150,7 +165,11 @@ class BreakModule final : public Module
         void DisableBreak()
         {
             // Disengages the break
-            if (DigitalWrite(kPin, kDisengage, false)) CompleteCommand();
+            if (DigitalWrite(kPin, kDisengage, false))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
+                CompleteCommand();
+            }
             else
             {
                 // If writing to Action pins is globally disabled, as indicated by DigitalWrite returning false,
@@ -173,7 +192,11 @@ class BreakModule final : public Module
 
             // Uses AnalogWrite to make the pin output a square wave pulse with the desired duty cycle (PWM). This
             // results in the breaks being applied a certain proportion of time, producing the desired breaking power.
-            if (AnalogWrite(kPin, value, false)) CompleteCommand();
+            if (AnalogWrite(kPin, value, false))
+            {
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kVariable));
+                CompleteCommand();
+            }
             else
             {
                 // If writing to Action pins is globally disabled, as indicated by AnalogWrite returning false,

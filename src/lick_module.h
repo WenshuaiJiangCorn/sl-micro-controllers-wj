@@ -18,9 +18,9 @@
 #define AXMC_LICK_MODULE_H
 
 #include <Arduino.h>
+#include <axmc_shared_assets.h>
 #include <digitalWriteFast.h>
-#include "axmc_shared_assets.h"
-#include "module.h"
+#include <module.h>
 
 /**
  * @brief Monitors the state of a custom conductive lick sensor for significant state changes and notifies the PC when
@@ -101,10 +101,10 @@ class LickModule final : public Module
             pinModeFast(kPin, INPUT);
 
             // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
-            _custom_parameters.lower_threshold   = 1000;   // ~0.8 / 1.2 V, depending on CPU voltage rating.
-            _custom_parameters.upper_threshold   = 65535;  // 3.3/ 5.0 V, depending on CPU voltage rating.
-            _custom_parameters.delta_threshold   = 500;    // Reports changes of ~0.4 / 0.6 V steps.
-            _custom_parameters.average_pool_size = 50;     // Averages 50 readouts to eliminate noise.
+            _custom_parameters.lower_threshold   = 1000;  // ~0.8 / 1.2 V, depending on CPU voltage rating.
+            _custom_parameters.upper_threshold   = 4095;  // 3.3/ 5.0 V, depending on CPU voltage rating.
+            _custom_parameters.delta_threshold   = 500;   // Reports changes of ~0.4 / 0.6 V steps.
+            _custom_parameters.average_pool_size = 50;    // Averages 50 readouts to eliminate noise.
 
             return true;
         }
@@ -115,8 +115,8 @@ class LickModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                uint16_t lower_threshold = 1000;   ///< The lower boundary for signals to be reported to PC.
-                uint16_t upper_threshold = 65535;  ///< The upper boundary for signals to be reported to PC.
+                uint16_t lower_threshold = 1000;  ///< The lower boundary for signals to be reported to PC.
+                uint16_t upper_threshold = 4095;  ///< The upper boundary for signals to be reported to PC.
                 uint16_t delta_threshold = 500;  ///< The minimum signal difference between checks to be reported to PC.
                 uint8_t average_pool_size = 50;  ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
@@ -149,8 +149,12 @@ class LickModule final : public Module
                 return;
             }
 
-            // Optionally allows notch, long-pass or short-pass filtering detected signals.
-            if (signal >= _custom_parameters.lower_threshold && signal <= _custom_parameters.upper_threshold)
+            // Optionally allows notch, long-pass or short-pass filtering detected signals. Note, if the previous
+            // readout is greater than the current readout (the current readout is a falling phase of the signal),
+            // only the upper threshold is checked. This correctly ignores the lower threshold when reporting a
+            // falling phase
+            if ((previous_readout > signal && signal <= _custom_parameters.upper_threshold) ||
+                (signal >= _custom_parameters.lower_threshold && signal <= _custom_parameters.upper_threshold))
             {
                 // Sends the detected signal to the PC.
                 SendData(
