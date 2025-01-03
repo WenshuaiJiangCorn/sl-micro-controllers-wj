@@ -106,6 +106,14 @@ class LickModule final : public Module
             _custom_parameters.delta_threshold   = 500;   // Reports changes of ~0.4 / 0.6 V steps.
             _custom_parameters.average_pool_size = 50;    // Averages 50 readouts to eliminate noise.
 
+            // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
+            // time-alignment during post-processing.
+            SendData(
+                static_cast<uint8_t>(kCustomStatusCodes::kChanged),
+                axmc_communication_assets::kPrototypes::kOneUint16,
+                0
+            );
+
             return true;
         }
 

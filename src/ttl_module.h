@@ -15,8 +15,8 @@
 #define AXMC_TTL_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <axmc_shared_assets.h>
+#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -123,7 +123,14 @@ class TTLModule final : public Module
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputOn));
                 }
             }
-            else pinModeFast(kPin, INPUT);
+            else
+            {
+                pinModeFast(kPin, INPUT);
+
+                // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
+                // time-alignment during post-processing.
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kInputOff));
+            }
 
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.pulse_duration    = 10000;  // 10000 microseconds == 10 milliseconds.
