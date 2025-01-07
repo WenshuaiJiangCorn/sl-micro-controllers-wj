@@ -137,11 +137,11 @@ class BreakModule final : public Module
 
         /// Depending on the break configuration, stores the digital signal that needs to be sent to the output pin to
         /// engage the break at maximum strength.
-        static constexpr bool kEngage = kNormallyEngaged ? HIGH : LOW;  // NOLINT(*-dynamic-static-initializers)
+        static constexpr bool kEngage = kNormallyEngaged ? LOW : HIGH;  // NOLINT(*-dynamic-static-initializers)
 
         /// Depending on the break configuration, stores the digital signal that needs to be sent to the output pin to
         /// disengage the break.
-        static constexpr bool kDisengage = kNormallyEngaged ? LOW : HIGH;  // NOLINT(*-dynamic-static-initializers)
+        static constexpr bool kDisengage = kNormallyEngaged ? HIGH : LOW;  // NOLINT(*-dynamic-static-initializers)
 
         /// Sets the Break to be continuously engaged (enabled) by outputting the appropriate digital signal.
         void EnableBreak()

@@ -9,21 +9,21 @@
 axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 
 // Initializes the serial communication class.
-Communication axmc_communication(Serial); // NOLINT(*-interfaces-global-init)
+Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
 // Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-# define SENSOR
+#define ACTOR
 
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
 #include "break_module.h"
-#include "valve_module.h"
 #include "ttl_module.h"
+#include "valve_module.h"
 
 constexpr uint8_t kControllerID = 101;
-TTLModule<33> mesoscope_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
-BreakModule<29, false> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<28, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
+TTLModule<33, true, false> mesoscope_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
+BreakModule<28, false, true> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
+ValveModule<29, true, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve};
 
 #elif defined SENSOR
@@ -32,9 +32,9 @@ Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve};
 #include "ttl_module.h"
 
 constexpr uint8_t kControllerID = 152;
-TTLModule<33> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<15> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
-TorqueModule<16, 2048> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
+TTLModule<34, false, false> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<40> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
+TorqueModule<41, 2048, true> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 
 #elif defined ENCODER
@@ -50,16 +50,38 @@ static_assert(false, "Define one of the supported microcontroller targets (ACTOR
 // Instantiates the Kernel class using the assets instantiated above.
 Kernel axmc_kernel(kControllerID, axmc_communication, DynamicRuntimeParameters, modules);
 
-void setup() {
-    Serial.begin(115200); // The baudrate is ignored for teensy boards.
+void setup()
+{
+    Serial.begin(115200);  // The baudrate is ignored for teensy boards.
+
+#ifdef ACTOR
+    pinMode(34, OUTPUT);
+    digitalWrite(34, LOW);
+    pinMode(35, OUTPUT);
+    digitalWrite(35, LOW);
+    pinMode(36, OUTPUT);
+    digitalWrite(36, LOW);
+
+#elif defined SENSOR
+    pinMode(33, OUTPUT);
+    digitalWrite(33, LOW);
+    pinMode(35, OUTPUT);
+    digitalWrite(35, LOW);
+    pinMode(36, OUTPUT);
+    digitalWrite(36, LOW);
+
+#elif defined ENCODER
+    pinMode(36, OUTPUT);
+    digitalWrite(36, LOW);
+#endif
 
     // Sets ADC resolution to 12 bits. Teensies can support up to 16 bits, but 12 often produces cleaner readouts.
     analogReadResolution(12);
 
-    axmc_kernel.Setup(); // Carries out the rest of the setup depending on the module configuration.
+    axmc_kernel.Setup();  // Carries out the rest of the setup depending on the module configuration.
 }
 
-
-void loop() {
+void loop()
+{
     axmc_kernel.RuntimeCycle();
 }
