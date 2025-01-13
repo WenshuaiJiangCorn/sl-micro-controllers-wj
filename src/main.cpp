@@ -33,7 +33,7 @@ Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve};
 
 constexpr uint8_t kControllerID = 152;
 TTLModule<34, false, false> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<40> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<A16> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
 TorqueModule<41, 2048, true> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 
@@ -41,7 +41,7 @@ Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 #include "encoder_module.h"
 
 constexpr uint8_t kControllerID = 203;
-EncoderModule<33, 34, 35> wheel_encoder(2, 1, axmc_communication, DynamicRuntimeParameters);
+EncoderModule<33, 34, 35, true> wheel_encoder(2, 1, axmc_communication, DynamicRuntimeParameters);
 Module *modules[] = {&wheel_encoder};
 #else
 static_assert(false, "Define one of the supported microcontroller targets (ACTOR, SENSOR, ENCODER).");

@@ -101,10 +101,10 @@ class LickModule final : public Module
             pinModeFast(kPin, INPUT);
 
             // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
-            _custom_parameters.lower_threshold   = 1000;  // ~0.8 / 1.2 V, depending on CPU voltage rating.
+            _custom_parameters.lower_threshold   = 100;  // ~0.8 / 1.2 V, depending on CPU voltage rating.
             _custom_parameters.upper_threshold   = 4095;  // 3.3/ 5.0 V, depending on CPU voltage rating.
-            _custom_parameters.delta_threshold   = 500;   // Reports changes of ~0.4 / 0.6 V steps.
-            _custom_parameters.average_pool_size = 50;    // Averages 50 readouts to eliminate noise.
+            _custom_parameters.delta_threshold   = 200;   // Reports changes of ~0.4 / 0.6 V steps.
+            _custom_parameters.average_pool_size = 0;    // Averages 50 readouts to eliminate noise.
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
             // time-alignment during post-processing.
@@ -123,10 +123,10 @@ class LickModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                uint16_t lower_threshold = 1000;  ///< The lower boundary for signals to be reported to PC.
+                uint16_t lower_threshold = 100;  ///< The lower boundary for signals to be reported to PC.
                 uint16_t upper_threshold = 4095;  ///< The upper boundary for signals to be reported to PC.
-                uint16_t delta_threshold = 500;  ///< The minimum signal difference between checks to be reported to PC.
-                uint8_t average_pool_size = 50;  ///< The number of readouts to average into pin state value.
+                uint16_t delta_threshold = 50;  ///< The minimum signal difference between checks to be reported to PC.
+                uint8_t average_pool_size = 0;  ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
 
         /// Checks the signal received by the input pin and, if necessary, reports it to the PC.
