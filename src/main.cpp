@@ -19,12 +19,14 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 #include "break_module.h"
 #include "ttl_module.h"
 #include "valve_module.h"
+#include "screen_module.h"
 
 constexpr uint8_t kControllerID = 101;
 TTLModule<33, true, false> mesoscope_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
 BreakModule<28, false, true> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
 ValveModule<29, true, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
-Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve};
+ScreenModule<2, 3, 4, true> screen_trigger(7, 1, axmc_communication, DynamicRuntimeParameters);
+Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve, &screen_trigger};
 
 #elif defined SENSOR
 #include "lick_module.h"
