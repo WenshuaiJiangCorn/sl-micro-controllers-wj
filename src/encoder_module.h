@@ -145,7 +145,7 @@ class EncoderModule final : public Module
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.report_CCW      = true;
             _custom_parameters.report_CW       = true;
-            _custom_parameters.delta_threshold = 20;
+            _custom_parameters.delta_threshold = 15;
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
             // time-alignment during post-processing.
@@ -166,7 +166,7 @@ class EncoderModule final : public Module
         {
                 bool report_CCW          = true;  ///< Determines whether to report changes in the CCW direction.
                 bool report_CW           = true;  ///< Determines whether to report changes in the CW direction.
-                uint32_t delta_threshold = 20;    ///< The minimum pulse count change (delta) for reporting changes.
+                uint32_t delta_threshold = 15;    ///< The minimum pulse count change (delta) for reporting changes.
         } PACKED_STRUCT _custom_parameters;
 
         /// The encoder class that abstracts low-level access to the Encoder pins and provides an easy API to retrieve

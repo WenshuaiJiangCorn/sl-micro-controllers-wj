@@ -12,7 +12,7 @@ axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
 // Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-#define ACTOR
+#define ENCODER
 
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
@@ -56,6 +56,8 @@ void setup()
 {
     Serial.begin(115200);  // The baudrate is ignored for teensy boards.
 
+// Disables unused 3.3V pins hooked up to the 3-5V voltage shifter. If this is not done, the shifter will output a
+// HIGH signal from non-disabled pins.
 #ifdef ACTOR
     pinMode(34, OUTPUT);
     digitalWrite(34, LOW);
