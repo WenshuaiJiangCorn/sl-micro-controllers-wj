@@ -12,7 +12,7 @@ axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
 // Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-#define ENCODER
+#define ACTOR
 
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
@@ -22,11 +22,12 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 #include "screen_module.h"
 
 constexpr uint8_t kControllerID = 101;
-TTLModule<33, true, false> mesoscope_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
+TTLModule<33, true, false> mesoscope_start_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
+TTLModule<34, true, false> mesoscope_stop_trigger(1, 2, axmc_communication, DynamicRuntimeParameters);
 BreakModule<28, false, true> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
 ValveModule<29, true, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
-ScreenModule<2, 3, 4, true> screen_trigger(7, 1, axmc_communication, DynamicRuntimeParameters);
-Module* modules[] = {&mesoscope_trigger, &wheel_break, &reward_valve, &screen_trigger};
+ScreenModule<15, 19, 23, true> screen_trigger(7, 1, axmc_communication, DynamicRuntimeParameters);
+Module* modules[] = {&mesoscope_start_trigger, &mesoscope_stop_trigger, &wheel_break, &reward_valve, &screen_trigger};
 
 #elif defined SENSOR
 #include "lick_module.h"
@@ -59,8 +60,6 @@ void setup()
 // Disables unused 3.3V pins hooked up to the 3-5V voltage shifter. If this is not done, the shifter will output a
 // HIGH signal from non-disabled pins.
 #ifdef ACTOR
-    pinMode(34, OUTPUT);
-    digitalWrite(34, LOW);
     pinMode(35, OUTPUT);
     digitalWrite(35, LOW);
     pinMode(36, OUTPUT);
