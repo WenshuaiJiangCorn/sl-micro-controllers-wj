@@ -265,9 +265,7 @@ class ValveModule final : public Module
                 }
 
                 // Blocks in-place until the pulse duration passes.
-                while (!WaitForMicros(_custom_parameters.pulse_duration))
-                {
-                }
+                delayMicroseconds(_custom_parameters.pulse_duration);
 
                 // Closes the valve
                 if (!DigitalWrite(kPin, kClose, false))
@@ -280,9 +278,7 @@ class ValveModule final : public Module
 
                 // Blocks for calibration_delay of microseconds to ensure the valve closes before initiating the next
                 // cycle.
-                while (!WaitForMicros(_custom_parameters.calibration_delay))
-                {
-                }
+                delayMicroseconds(_custom_parameters.calibration_delay);
             }
 
             // This command completes after running the requested number of cycles.

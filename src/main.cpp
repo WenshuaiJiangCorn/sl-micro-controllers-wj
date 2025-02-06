@@ -17,9 +17,9 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
 #include "break_module.h"
+#include "screen_module.h"
 #include "ttl_module.h"
 #include "valve_module.h"
-#include "screen_module.h"
 
 constexpr uint8_t kControllerID = 101;
 TTLModule<33, true, false> mesoscope_start_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
