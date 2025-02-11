@@ -14,8 +14,8 @@
 #define AXMC_VALVE_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <axmc_shared_assets.h>
+#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -129,9 +129,9 @@ class ValveModule final : public Module
             }
 
             // Resets the custom_parameters structure fields to their default values.
-            _custom_parameters.pulse_duration    = 10000;  // 10 milliseconds.
-            _custom_parameters.calibration_delay = 10000;  // 10 milliseconds.
-            _custom_parameters.calibration_count = 100;    // The valve is pulsed 100 times during calibration.
+            _custom_parameters.pulse_duration    = 35590;   // Gives us 5.0 uL of water.
+            _custom_parameters.calibration_delay = 200000;  // 200 milliseconds.
+            _custom_parameters.calibration_count = 500;     // The valve is pulsed 500 times during calibration.
 
             return true;
         }
@@ -142,9 +142,10 @@ class ValveModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration    = 10000;  ///< The time, in microseconds, the valve is open during pulses.
-                uint32_t calibration_delay = 10000;  ///< The time, in microseconds, to wait between calibration pulses.
-                uint16_t calibration_count = 100;    ///< How many times to pulse the valve during calibration.
+                uint32_t pulse_duration = 35590;  ///< The time, in microseconds, the valve is open during pulses.
+                uint32_t calibration_delay =
+                    200000;                        ///< The time, in microseconds, to wait between calibration pulses.
+                uint16_t calibration_count = 500;  ///< How many times to pulse the valve during calibration.
         } PACKED_STRUCT _custom_parameters;
 
         /// Depending on the valve configuration, stores the digital signal that needs to be sent to the output pin to
