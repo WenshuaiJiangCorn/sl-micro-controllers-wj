@@ -12,7 +12,7 @@ axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
 // Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-#define ACTOR
+#define SENSOR
 
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
@@ -36,7 +36,7 @@ Module* modules[] = {&mesoscope_start_trigger, &mesoscope_stop_trigger, &wheel_b
 
 constexpr uint8_t kControllerID = 152;
 TTLModule<34, false, false> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<A16> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<40> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
 TorqueModule<41, 2048, true> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 

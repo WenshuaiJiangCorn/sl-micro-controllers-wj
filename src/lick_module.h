@@ -101,10 +101,9 @@ class LickModule final : public Module
             pinModeFast(kPin, INPUT);
 
             // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
-            _custom_parameters.lower_threshold   = 100;  // ~0.8 / 1.2 V, depending on CPU voltage rating.
-            _custom_parameters.upper_threshold   = 4095;  // 3.3/ 5.0 V, depending on CPU voltage rating.
-            _custom_parameters.delta_threshold   = 200;   // Reports changes of ~0.4 / 0.6 V steps.
-            _custom_parameters.average_pool_size = 0;    // Averages 50 readouts to eliminate noise.
+            _custom_parameters.signal_threshold  = 100;  // Ideally should be just high enough to filter out noise
+            _custom_parameters.delta_threshold   = 50;  // Ideally should be at least half of the minimal threshold
+            _custom_parameters.average_pool_size = 0;    // Better to have at 0 because Teensy already does this
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
             // time-alignment during post-processing.
@@ -123,10 +122,9 @@ class LickModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                uint16_t lower_threshold = 100;  ///< The lower boundary for signals to be reported to PC.
-                uint16_t upper_threshold = 4095;  ///< The upper boundary for signals to be reported to PC.
-                uint16_t delta_threshold = 50;  ///< The minimum signal difference between checks to be reported to PC.
-                uint8_t average_pool_size = 0;  ///< The number of readouts to average into pin state value.
+                uint16_t signal_threshold = 100;  ///< The lower boundary for signals to be reported to PC.
+                uint16_t delta_threshold  = 50;  ///< The minimum difference between checks to be reported to PC.
+                uint8_t average_pool_size = 0;    ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
 
         /// Checks the signal received by the input pin and, if necessary, reports it to the PC.
@@ -157,12 +155,8 @@ class LickModule final : public Module
                 return;
             }
 
-            // Optionally allows notch, long-pass or short-pass filtering detected signals. Note, if the previous
-            // readout is greater than the current readout (the current readout is a falling phase of the signal),
-            // only the upper threshold is checked. This correctly ignores the lower threshold when reporting a
-            // falling phase
-            if ((previous_readout > signal && signal <= _custom_parameters.upper_threshold) ||
-                (signal >= _custom_parameters.lower_threshold && signal <= _custom_parameters.upper_threshold))
+            // If the signal is above the threshold, sends it to the PC and replaces the previous_readout value
+            if (signal >= _custom_parameters.signal_threshold)
             {
                 // Sends the detected signal to the PC.
                 SendData(
@@ -172,6 +166,18 @@ class LickModule final : public Module
                 );
 
                 previous_readout = signal;  // Overwrites the previous readout with the current signal.
+            }
+
+            // If the signal is below the threshold, pulls it to 0. If a 0-message has already been sent to the PC, does
+            // not repeatedly send 0-messages to conserve bandwidth.
+            else if (previous_readout != 0)
+            {
+                SendData(
+                   static_cast<uint8_t>(kCustomStatusCodes::kChanged),
+                   axmc_communication_assets::kPrototypes::kOneUint16,
+                   0
+               );
+                previous_readout = 0;
             }
 
             // Completes command execution
