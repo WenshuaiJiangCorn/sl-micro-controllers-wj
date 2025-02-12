@@ -36,7 +36,7 @@ Module* modules[] = {&mesoscope_start_trigger, &mesoscope_stop_trigger, &wheel_b
 
 constexpr uint8_t kControllerID = 152;
 TTLModule<34, false, false> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<40> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<21> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
 TorqueModule<41, 2048, true> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 
@@ -78,7 +78,7 @@ void setup()
     digitalWrite(36, LOW);
 #endif
 
-    // Sets ADC resolution to 12 bits. Teensies can support up to 16 bits, but 12 often produces cleaner readouts.
+    // Sets ADC resolution to 12 bits. Teensy boards can support up to 16 bits, but 12 often produces cleaner readouts.
     analogReadResolution(12);
 
     axmc_kernel.Setup();  // Carries out the rest of the setup depending on the module configuration.

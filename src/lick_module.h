@@ -98,11 +98,11 @@ class LickModule final : public Module
         bool SetupModule() override
         {
             // Sets pin to Input mode.
-            pinModeFast(kPin, INPUT);
+            pinModeFast(kPin, INPUT_PULLUP);
 
             // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
-            _custom_parameters.signal_threshold  = 100;  // Ideally should be just high enough to filter out noise
-            _custom_parameters.delta_threshold   = 50;  // Ideally should be at least half of the minimal threshold
+            _custom_parameters.signal_threshold  = 200;  // Ideally should be just high enough to filter out noise
+            _custom_parameters.delta_threshold   = 180;  // Ideally should be at least half of the minimal threshold
             _custom_parameters.average_pool_size = 0;    // Better to have at 0 because Teensy already does this
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
@@ -122,8 +122,8 @@ class LickModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                uint16_t signal_threshold = 100;  ///< The lower boundary for signals to be reported to PC.
-                uint16_t delta_threshold  = 50;  ///< The minimum difference between checks to be reported to PC.
+                uint16_t signal_threshold = 200;  ///< The lower boundary for signals to be reported to PC.
+                uint16_t delta_threshold  = 180;  ///< The minimum difference between checks to be reported to PC.
                 uint8_t average_pool_size = 0;    ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
 
@@ -140,7 +140,7 @@ class LickModule final : public Module
             // this value should not use the full range of the 16-bit unit variable.
             const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
 
-            // Also calculates the absolute difference between the current signal and the previous readout. This is used
+            // Calculates the absolute difference between the current signal and the previous readout. This is used
             // to ensure only significant signal changes are reported to the PC. Note, although we are casting both to
             // int32 to support the delta calculation, the resultant delta will always be within the unit_16 range.
             // Therefore, it is fine to cast it back to uint16 to avoid unnecessary future casting in the 'if'
