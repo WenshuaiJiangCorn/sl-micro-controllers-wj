@@ -111,9 +111,9 @@ class TorqueModule final : public Module
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.report_CCW        = true;
             _custom_parameters.report_CW         = true;
-            _custom_parameters.signal_threshold  = 200;  // ~ 0.16 / 0.24 V, depending on CPU voltage rating.
-            _custom_parameters.delta_threshold   = 100;  // ~ 0.08 / 0.12 V steps depending on CPU voltage rating.
-            _custom_parameters.average_pool_size = 50;   // Averages 50 pin readouts
+            _custom_parameters.signal_threshold  = 100;
+            _custom_parameters.delta_threshold   = 70;
+            _custom_parameters.average_pool_size = 5;
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
             // time-alignment during post-processing.
@@ -134,9 +134,9 @@ class TorqueModule final : public Module
         {
                 bool report_CCW           = true;  ///< Determines whether to report changes in the CCW direction.
                 bool report_CW            = true;  ///< Determines whether to report changes in the CCW direction.
-                uint16_t signal_threshold = 200;   ///< The minimum deviation from the baseline to be reported to PC.
-                uint16_t delta_threshold = 100;  ///< The minimum signal difference between checks to be reported to PC.
-                uint8_t average_pool_size = 30;  ///< The number of readouts to average into pin state value.
+                uint16_t signal_threshold = 100;   ///< The minimum deviation from the baseline to be reported to PC.
+                uint16_t delta_threshold  = 70;  ///< The minimum signal difference between checks to be reported to PC.
+                uint8_t average_pool_size = 5;   ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
 
         /// Checks the signal received by the input pin and, if necessary, reports it to the PC.
