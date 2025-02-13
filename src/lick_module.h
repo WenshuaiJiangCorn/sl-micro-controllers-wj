@@ -98,7 +98,7 @@ class LickModule final : public Module
         bool SetupModule() override
         {
             // Sets pin to Input mode.
-            pinModeFast(kPin, INPUT_PULLUP);
+            pinModeFast(kPin, INPUT_PULLDOWN);
 
             // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
             _custom_parameters.signal_threshold  = 200;  // Ideally should be just high enough to filter out noise
@@ -148,6 +148,8 @@ class LickModule final : public Module
             const auto delta =
                 static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
 
+            previous_readout = signal;  // Overwrites the previous readout with the current signal.
+
             // Prevents reporting signals that are not significantly different from the previous readout value.
             if (delta <= _custom_parameters.delta_threshold)
             {
@@ -164,12 +166,9 @@ class LickModule final : public Module
                     axmc_communication_assets::kPrototypes::kOneUint16,
                     signal
                 );
-
-                previous_readout = signal;  // Overwrites the previous readout with the current signal.
             }
 
-            // If the signal is below the threshold, pulls it to 0. If a 0-message has already been sent to the PC, does
-            // not repeatedly send 0-messages to conserve bandwidth.
+            // If the signal is below the threshold, pulls it to 0.
             else if (previous_readout != 0)
             {
                 SendData(
@@ -177,7 +176,6 @@ class LickModule final : public Module
                    axmc_communication_assets::kPrototypes::kOneUint16,
                    0
                );
-                previous_readout = 0;
             }
 
             // Completes command execution
