@@ -111,15 +111,14 @@ class TorqueModule final : public Module
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.report_CCW        = true;
             _custom_parameters.report_CW         = true;
-            _custom_parameters.lower_threshold   = 200;   // ~ 0.16 / 0.24 V, depending on CPU voltage rating.
-            _custom_parameters.upper_threshold   = 2046;  // ~ 1.65 / 2.5 V, depending on CPU voltage rating.
-            _custom_parameters.delta_threshold   = 100;   // ~ 0.08 / 0.12 V steps depending on CPU voltage rating.
-            _custom_parameters.average_pool_size = 50;    // Averages 50 pin readouts
+            _custom_parameters.signal_threshold  = 200;  // ~ 0.16 / 0.24 V, depending on CPU voltage rating.
+            _custom_parameters.delta_threshold   = 100;  // ~ 0.08 / 0.12 V steps depending on CPU voltage rating.
+            _custom_parameters.average_pool_size = 50;   // Averages 50 pin readouts
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
             // time-alignment during post-processing.
             SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kCWTorque),  // Direction is not relevant for 0 value
+                static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),  // Direction is not relevant for 0 value
                 axmc_communication_assets::kPrototypes::kOneUint16,
                 0
             );
@@ -133,12 +132,11 @@ class TorqueModule final : public Module
         /// Stores custom addressable runtime parameters of the module.
         struct CustomRuntimeParameters
         {
-                bool report_CCW          = true;  ///< Determines whether to report changes in the CCW direction.
-                bool report_CW           = true;  ///< Determines whether to report changes in the CCW direction.
-                uint16_t lower_threshold = 200;   ///< The lower absolute boundary for signals to be reported to PC.
-                uint16_t upper_threshold = 2046;  ///< The upper absolute boundary for signals to be reported to PC.
+                bool report_CCW           = true;  ///< Determines whether to report changes in the CCW direction.
+                bool report_CW            = true;  ///< Determines whether to report changes in the CCW direction.
+                uint16_t signal_threshold = 200;   ///< The minimum deviation from the baseline to be reported to PC.
                 uint16_t delta_threshold = 100;  ///< The minimum signal difference between checks to be reported to PC.
-                uint8_t average_pool_size = 50;  ///< The number of readouts to average into pin state value.
+                uint8_t average_pool_size = 30;  ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
 
         /// Checks the signal received by the input pin and, if necessary, reports it to the PC.
@@ -149,6 +147,11 @@ class TorqueModule final : public Module
             // significant change can be adjusted through the custom_parameters structure. The value is
             // initialized to the baseline that denotes zero-torque readouts.
             static uint16_t previous_readout = kBaseline;  // NOLINT(*-dynamic-static-initializers)
+
+            // Tracks whether the previous message sent to the PC included a zero torque value. This is used to
+            // eliminate repeated reporting of sub-threshold values pulled down to 0 to the PC. In turn, this conserves
+            // communication bandwidth
+            static bool previous_zero = false;
 
             // Evaluates the state of the pin. Averages the requested number of readouts to produce the final
             // analog signal value. Note, since we statically configure the controller to use 10-14 bit ADC resolution,
@@ -167,6 +170,13 @@ class TorqueModule final : public Module
                 CompleteCommand();
                 return;
             }
+
+            // Note, this is different from the lick sensor, where the previous signal is set before delta calculation.
+            // This has to do with the sensitivity of each sensor and the magnitude of expected deltas. Lick sensor
+            // changes are very large and happen very rapidly, so it is better to have this setter before delta check.
+            // Torque changes are considerably slower and more gradual, so it is better to do the setting after the
+            // delta
+            previous_readout = signal;  // Overwrites the previous readout with the current signal.
 
             // Determines the direction of the signal. Signals above the baseline are interpreted as CCW, signals below
             // baseline as CW. Also rescales the signal as necessary for its value to always mean the same things: 0
@@ -191,47 +201,51 @@ class TorqueModule final : public Module
             else
             {
                 // If the signal is 0, the direction does not really matter
-                cw     = true;
+                cw     = false;  // Uses CCW for zero-torque reporting
                 signal = 0;
             }
 
-            // Allows notch, long-pass or short-pass filtering detected signals. Note, the lower threshold is only
-            // applied to the rising phase of the signal, falling phase of the signal is reported regardless of the
-            // lower threshold.
-            if (previous_readout < signal &&
-                (signal <= _custom_parameters.lower_threshold || signal >= _custom_parameters.upper_threshold))
+            // If the signal is below the threshold, pulls it to 0 and notifies the PC. The torque direction in this
+            // case does not matter
+            if (signal < _custom_parameters.signal_threshold)
             {
-                CompleteCommand();
-                return;
+                // Ensures sub-threshold values are only sent to the PC once if multiple zero-values occur in succession
+                if (!previous_zero)
+                {
+                    SendData(
+                        static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),  // Uses CCW for 0-torque reporting
+                        axmc_communication_assets::kPrototypes::kOneUint16,
+                        0
+                    );
+                    previous_zero = true;
+                }
             }
-            if (previous_readout > signal && signal >= _custom_parameters.upper_threshold)
+            else
             {
-                CompleteCommand();
-                return;
-            }
+                // Sends the detected signal to the PC using the event-code to code for the direction and the
+                // signal value to provide the absolute directional torque value in raw ADC units. Only sends the data
+                // if the class is configured to report changes in that direction
+                if (!cw && _custom_parameters.report_CCW)
+                {
+                    SendData(
+                        static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
+                        axmc_communication_assets::kPrototypes::kOneUint16,
+                        signal
+                    );
+                }
+                else if (cw && _custom_parameters.report_CW)
+                {
+                    SendData(
+                        static_cast<uint8_t>(kCustomStatusCodes::kCWTorque),
+                        axmc_communication_assets::kPrototypes::kOneUint16,
+                        signal
+                    );
+                }
 
-            // Sends the detected signal to the PC using the event-code to code for the direction and the
-            // signal value to provide the absolute directional torque value in raw ADC units. Only sends the data if
-            // the class is configured to report changes in that direction
-            if (!cw && _custom_parameters.report_CCW)
-            {
-                SendData(
-                    static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
-                    axmc_communication_assets::kPrototypes::kOneUint16,
-                    signal
-                );
-            }
-            else if (cw && _custom_parameters.report_CW)
-            {
-                SendData(
-                    static_cast<uint8_t>(kCustomStatusCodes::kCWTorque),
-                    axmc_communication_assets::kPrototypes::kOneUint16,
-                    signal
-                );
+                previous_zero = false;
             }
 
             // Completes command execution
-            previous_readout = signal;  // Overwrites the previous readout with the current signal.
             CompleteCommand();
         }
 };

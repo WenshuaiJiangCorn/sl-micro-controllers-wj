@@ -135,6 +135,11 @@ class LickModule final : public Module
             // significant change can be adjusted through the custom_parameters structure.
             static uint16_t previous_readout = 0;
 
+            // Tracks whether the previous message sent to the PC included a zero torque value. This is used to
+            // eliminate repeated reporting of sub-threshold values pulled down to 0 to the PC. In turn, this conserves
+            // communication bandwidth
+            static bool previous_zero = false;
+
             // Evaluates the state of the pin. Averages the requested number of readouts to produce the final
             // analog signal value. Note, since we statically configure the controller to use 10-14 bit ADC resolution,
             // this value should not use the full range of the 16-bit unit variable.
@@ -157,7 +162,7 @@ class LickModule final : public Module
                 return;
             }
 
-            // If the signal is above the threshold, sends it to the PC and replaces the previous_readout value
+            // If the signal is above the threshold, sends it to the PC
             if (signal >= _custom_parameters.signal_threshold)
             {
                 // Sends the detected signal to the PC.
@@ -166,16 +171,21 @@ class LickModule final : public Module
                     axmc_communication_assets::kPrototypes::kOneUint16,
                     signal
                 );
+                previous_zero = false;
             }
 
-            // If the signal is below the threshold, pulls it to 0.
-            else if (previous_readout != 0)
+            // If the signal is below the threshold, pulls it to 0 and notifies the PC
+            else
             {
-                SendData(
-                   static_cast<uint8_t>(kCustomStatusCodes::kChanged),
-                   axmc_communication_assets::kPrototypes::kOneUint16,
-                   0
-               );
+                if (!previous_zero)
+                {
+                    SendData(
+                        static_cast<uint8_t>(kCustomStatusCodes::kChanged),
+                        axmc_communication_assets::kPrototypes::kOneUint16,
+                        0
+                    );
+                    previous_zero = true;
+                }
             }
 
             // Completes command execution
