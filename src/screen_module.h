@@ -6,7 +6,7 @@
  * without interfering with the display configuration of the host PC by directly manipulating the HDMI-translator card
  * hardware.
  *
- * @section ttl_mod_dependencies Dependencies:
+ * @section scr_mod_dependencies Dependencies:
  * - Arduino.h for Arduino platform functions and macros and cross-compatibility with Arduino IDE (to an extent).
  * - digitalWriteFast.h for fast digital pin manipulation methods.
  * - module.h for the shared Module class API access (integrates the custom module into runtime flow).

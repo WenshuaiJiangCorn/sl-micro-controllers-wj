@@ -171,7 +171,7 @@ class ValveModule final : public Module
                 }
                 else
                 {
-                    // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
+                    // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                     // sends an error message to the PC and aborts the runtime.
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
                     AbortCommand();  // Aborts the current and all future command executions.
@@ -179,7 +179,7 @@ class ValveModule final : public Module
                 }
             }
 
-            // Keeps the valve open while the desired amount fo fluid is passing through
+            // Keeps the valve open while the desired amount of fluid is passing through
             if (execution_parameters.stage == 2)
             {
                 // Blocks for the pulse_duration of microseconds, relative to the time of the last AdvanceCommandStage()
@@ -200,7 +200,7 @@ class ValveModule final : public Module
                 }
                 else
                 {
-                    // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
+                    // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                     // sends an error message to the PC and aborts the runtime.
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
                     AbortCommand();  // Aborts the current and all future command executions.
@@ -219,7 +219,7 @@ class ValveModule final : public Module
             }
             else
             {
-                // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
+                // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                 // sends an error message to the PC and aborts the runtime.
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
                 AbortCommand();  // Aborts the current and all future command executions.
@@ -237,7 +237,7 @@ class ValveModule final : public Module
             }
             else
             {
-                // If writing to TTL pins is globally disabled, as indicated by DigitalWrite returning false,
+                // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                 // sends an error message to the PC and aborts the runtime.
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
                 AbortCommand();  // Aborts the current and all future command executions.

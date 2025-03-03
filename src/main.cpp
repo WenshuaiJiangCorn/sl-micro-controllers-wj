@@ -12,7 +12,7 @@ axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
 // Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-#define SENSOR
+#define ACTOR
 
 // Resolves microcontroller-specific module configuration and layout
 #ifdef ACTOR
@@ -20,6 +20,7 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 #include "screen_module.h"
 #include "ttl_module.h"
 #include "valve_module.h"
+#include "speaker_module.h"
 
 constexpr uint8_t kControllerID = 101;
 TTLModule<33, true, false> mesoscope_start_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
@@ -27,6 +28,7 @@ TTLModule<34, true, false> mesoscope_stop_trigger(1, 2, axmc_communication, Dyna
 BreakModule<28, false, true> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
 ValveModule<29, true, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
 ScreenModule<15, 19, 23, true> screen_trigger(7, 1, axmc_communication, DynamicRuntimeParameters);
+SpeakerModule<9, true> speaker(8, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_start_trigger, &mesoscope_stop_trigger, &wheel_break, &reward_valve, &screen_trigger};
 
 #elif defined SENSOR
