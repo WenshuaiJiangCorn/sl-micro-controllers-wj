@@ -26,9 +26,8 @@ constexpr uint8_t kControllerID = 101;
 TTLModule<33, true, false> mesoscope_start_trigger(1, 1, axmc_communication, DynamicRuntimeParameters);
 TTLModule<34, true, false> mesoscope_stop_trigger(1, 2, axmc_communication, DynamicRuntimeParameters);
 BreakModule<28, false, true> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<29, true, true> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
+ValveModule<29, true, true, 9> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
 ScreenModule<15, 19, 23, true> screen_trigger(7, 1, axmc_communication, DynamicRuntimeParameters);
-SpeakerModule<9, true> speaker(8, 1, axmc_communication, DynamicRuntimeParameters);
 Module* modules[] = {&mesoscope_start_trigger, &mesoscope_stop_trigger, &wheel_break, &reward_valve, &screen_trigger};
 
 #elif defined SENSOR

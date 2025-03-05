@@ -25,6 +25,10 @@
  * hardware to deliver voltage that opens or closes the controlled valve. Depending on configuration, this module is
  * designed to work with both Normally Closed (NC) and Normally Open (NO) valves.
  *
+ * The class can also optionally operate a FET-gated relay connected to a piezoelectric tone buzzer. This couples valve
+ * open states with the delivery of an audible tone, which is desired for some applications. Currently, the tone is only
+ * used during valve pulse commands.
+ *
  * @note This class was calibrated to work with fluid valves that deliver micro-liter-precise amounts of fluid under
  * gravitational driving force. The current class implementation may not work as intended for other use cases.
  * Additionally, the class is designed for dispensing predetermined amounts of fluid and not for continuous flow rate
@@ -37,14 +41,20 @@
  * @tparam kStartClosed determines the initial state of the valve during class initialization. This works
  * together with kNormallyClosed parameter to deliver the desired initial voltage level for the valve to either be
  * opened or closed after hardware initialization.
+ * @tparam kTonePin the digital pin connected to the tone buzzer's FET-gated relay.
  */
-template <const uint8_t kPin, const bool kNormallyClosed, const bool kStartClosed = true>
+template <const uint8_t kPin, const bool kNormallyClosed, const bool kStartClosed = true, const uint8_t kTonePin = 255>
 class ValveModule final : public Module
 {
-        // Ensures that the pin does not interfere with LED pin.
+        // Ensures that the valve pin does not interfere with LED pin.
         static_assert(
             kPin != LED_BUILTIN,
-            "LED-connected pin is reserved for LED manipulation. Select a different pin for ValveModule instance."
+            "LED-connected pin is reserved for LED manipulation. Select a different valve pin for ValveModule instance."
+        );
+        // Ensures that the tone pin does not interfere with LED pin.
+        static_assert(
+            kTonePin != LED_BUILTIN,
+            "LED-connected pin is reserved for LED manipulation. Select a different tone pin for ValveModule instance."
         );
 
     public:
@@ -132,6 +142,7 @@ class ValveModule final : public Module
             _custom_parameters.pulse_duration    = 35590;   // Gives us 5.0 uL of water.
             _custom_parameters.calibration_delay = 200000;  // 200 milliseconds.
             _custom_parameters.calibration_count = 500;     // The valve is pulsed 500 times during calibration.
+            _custom_parameters.tone_duration     = 100000;  // 100 milliseconds.
 
             return true;
         }
@@ -146,6 +157,7 @@ class ValveModule final : public Module
                 uint32_t calibration_delay =
                     200000;                        ///< The time, in microseconds, to wait between calibration pulses.
                 uint16_t calibration_count = 500;  ///< How many times to pulse the valve during calibration.
+                uint32_t tone_duration = 100000;  ///< The time, in microseconds, to sound the tone during valve pulses.
         } PACKED_STRUCT _custom_parameters;
 
         /// Depending on the valve configuration, stores the digital signal that needs to be sent to the output pin to
@@ -166,6 +178,10 @@ class ValveModule final : public Module
                 // DigitalWrite returning true, advances the command stage.
                 if (DigitalWrite(kPin, kOpen, false))
                 {
+                    // If the valve is successfully opened and the class is configured to deliver audible tones during
+                    // pulses, also activates the tone buzzer.
+                    if (kTonePin != 255) digitalWriteFast(kTonePin, HIGH);
+
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
                     AdvanceCommandStage();
                 }
@@ -196,15 +212,35 @@ class ValveModule final : public Module
                 if (DigitalWrite(kPin, kClose, false))
                 {
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kClosed));
-                    CompleteCommand();
+                    if (kTonePin == 255) CompleteCommand();  // If tone is not used, finishes command execution
+                    else AdvanceCommandStage();  // Otherwise, advances the command stage to resolve tone duration
                 }
                 else
                 {
                     // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                     // sends an error message to the PC and aborts the runtime.
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
+                    if (kTonePin != 255) digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
                     AbortCommand();  // Aborts the current and all future command executions.
                 }
+            }
+
+            // Waits for the tone duration to pass
+            if (execution_parameters.stage == 4)
+            {
+                // The tone has to be ON for at least 100 milliseconds, whereas the valve is usually opened for ~ 30
+                // milliseconds. Therefore, here we delay for the REMAINING tone duration after accounting for the
+                // pulse duration. This assumes that the method runs in blocking mode and there is negligible time
+                // loss between the end of the valve pulse duration and this wait function call.
+                if (!WaitForMicros(_custom_parameters.tone_duration - _custom_parameters.pulse_duration)) return;
+                AdvanceCommandStage();
+            }
+
+            // Deactivates the tone
+            if (execution_parameters.stage == 5)
+            {
+                digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
+                CompleteCommand();  // Finishes command execution
             }
         }
 
