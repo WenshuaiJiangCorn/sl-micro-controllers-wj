@@ -122,8 +122,10 @@ class ValveModule final : public Module
         /// Sets up module hardware parameters.
         bool SetupModule() override
         {
-            // Sets pin mode to OUTPUT
+            // Sets pin modes to OUTPUT
             pinModeFast(kPin, OUTPUT);
+            pinModeFast(kTonePin, OUTPUT);
+            digitalWriteFast(kTonePin, LOW);  // Ensures the TONE pin starts low
 
             // Based on the requested initial valve state and the configuration of the valve (normally closed or open),
             // either opens or closes the valve following setup.
