@@ -128,6 +128,7 @@ class ValveModule final : public Module
             pinModeFast(kPin, OUTPUT);
             pinModeFast(kTonePin, OUTPUT);
             digitalWriteFast(kTonePin, LOW);  // Ensures the TONE pin starts low
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));
 
             // Based on the requested initial valve state and the configuration of the valve (normally closed or open),
             // either opens or closes the valve following setup.
