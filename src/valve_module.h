@@ -68,6 +68,8 @@ class ValveModule final : public Module
             kOpen         = 52,  ///< The valve is currently open.
             kClosed       = 53,  ///< The valve is currently closed.
             kCalibrated   = 54,  ///< The valve calibration cycle has been completed.
+            kToneOn       = 55,  ///< The tone is currently audible.
+            kToneOff      = 56   ///< The tone is currently silenced.
         };
 
         /// Assigns meaningful names to module command byte-codes.
@@ -144,7 +146,7 @@ class ValveModule final : public Module
             _custom_parameters.pulse_duration    = 35590;   // Gives us 5.0 uL of water.
             _custom_parameters.calibration_delay = 200000;  // 200 milliseconds.
             _custom_parameters.calibration_count = 500;     // The valve is pulsed 500 times during calibration.
-            _custom_parameters.tone_duration     = 100000;  // 100 milliseconds.
+            _custom_parameters.tone_duration     = 300000;  // 300 milliseconds.
 
             return true;
         }
@@ -159,7 +161,7 @@ class ValveModule final : public Module
                 uint32_t calibration_delay =
                     200000;                        ///< The time, in microseconds, to wait between calibration pulses.
                 uint16_t calibration_count = 500;  ///< How many times to pulse the valve during calibration.
-                uint32_t tone_duration = 100000;  ///< The time, in microseconds, to sound the tone during valve pulses.
+                uint32_t tone_duration = 300000;  ///< The time, in microseconds, to sound the tone during valve pulses.
         } PACKED_STRUCT _custom_parameters;
 
         /// Depending on the valve configuration, stores the digital signal that needs to be sent to the output pin to
@@ -180,11 +182,16 @@ class ValveModule final : public Module
                 // DigitalWrite returning true, advances the command stage.
                 if (DigitalWrite(kPin, kOpen, false))
                 {
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
+
                     // If the valve is successfully opened and the class is configured to deliver audible tones during
                     // pulses, also activates the tone buzzer.
-                    if (kTonePin != 255) digitalWriteFast(kTonePin, HIGH);
+                    if(kTonePin != 255)
+                    {
+                        digitalWriteFast(kTonePin, HIGH);
+                        SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOn));
+                    }
 
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
                     AdvanceCommandStage();
                 }
                 else
@@ -222,7 +229,11 @@ class ValveModule final : public Module
                     // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                     // sends an error message to the PC and aborts the runtime.
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
-                    if (kTonePin != 255) digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
+                    if (kTonePin != 255)
+                    {
+                        digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
+                        SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));
+                    }
                     AbortCommand();  // Aborts the current and all future command executions.
                 }
             }
@@ -242,7 +253,7 @@ class ValveModule final : public Module
             if (execution_parameters.stage == 5)
             {
                 digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
-                CompleteCommand();  // Finishes command execution
+                CompleteCommand();                // Finishes command execution
             }
         }
 
