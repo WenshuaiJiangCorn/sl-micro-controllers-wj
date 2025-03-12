@@ -230,11 +230,6 @@ class ValveModule final : public Module
                     // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
                     // sends an error message to the PC and aborts the runtime.
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
-                    if (kTonePin != 255)
-                    {
-                        digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
-                        SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));
-                    }
                     AbortCommand();  // Aborts the current and all future command executions.
                 }
             }
@@ -254,6 +249,7 @@ class ValveModule final : public Module
             if (execution_parameters.stage == 5)
             {
                 digitalWriteFast(kTonePin, LOW);  // Ensures the tone is turned OFF
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));  // Notifies the PC
                 CompleteCommand();                // Finishes command execution
             }
         }
