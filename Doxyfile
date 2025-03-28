@@ -4,16 +4,18 @@
 # parsed and used by sphinx to render the static .html page via 'breathe' bridge.
 
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "ataraxis-micro-controller"
+PROJECT_NAME           = "sl-micro-controllers"
 OUTPUT_DIRECTORY       = docs/source/doxygen
 OUTPUT_LANGUAGE        = English
-INPUT                  = src/axmc_shared_assets.h \
-                         src/module.h \
-                         src/kernel.h \
-                         src/communication.h
+INPUT                  = src/break_module.h \
+                         src/encoder_module.h \
+                         src/screen_module.h \
+                         src/torque_module.h \
+                         src/lick_module.h \
+                         src/ttl_module.h \
+                         src/valve_module.h
 GENERATE_XML           = YES
 XML_OUTPUT             = xml
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = NO
-PREDEFINED             = PACKED_STRUCT=

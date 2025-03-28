@@ -1,26 +1,44 @@
 .. This file provides the instructions for how to display the API documentation generated using doxygen-breathe-sphinx
 .. pipeline.
 
-Shared Assets
+Break Module
+============
+
+.. doxygenfile:: break_module.h
+   :project: sl-micro-controllers
+
+Encoder Module
+==============
+
+.. doxygenfile:: encoder_module.h
+   :project: sl-micro-controllers
+
+Lick Module
+===========
+
+.. doxygenfile:: lick_module.h
+   :project: sl-micro-controllers
+
+Screen Module
 =============
 
-.. doxygenfile:: axmc_shared_assets.h
-   :project: ataraxis-micro-controller
+.. doxygenfile:: screen_module.h
+   :project: sl-micro-controllers
 
-Communication
+Torque Module
 =============
 
-.. doxygenfile:: communication.h
-   :project: ataraxis-micro-controller
+.. doxygenfile:: torque_module.h
+   :project: sl-micro-controllers
 
-Kernel
-======
+TTL Module
+=============
 
-.. doxygenfile:: kernel.h
-   :project: ataraxis-micro-controller
+.. doxygenfile:: ttl_module.h
+  :project: sl-micro-controllers
 
-Module
-======
+Valve Module
+============
 
-.. doxygenfile:: module.h
-   :project: ataraxis-micro-controller
+.. doxygenfile:: valve_module.h
+  :project: sl-micro-controllers

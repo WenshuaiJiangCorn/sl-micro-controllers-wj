@@ -1,10 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 
 # -- Project information -----------------------------------------------------
-project = 'ataraxis-micro-controller'
+project = 'sl-micro-controllers'
 # noinspection PyShadowingBuiltins
 copyright = '2024, Ivan Kondratyev (Inkaros) & Sun Lab'
-authors = ['Ivan Kondratyev (Inkaros)', 'Jasmine Si']
+authors = ['Ivan Kondratyev (Inkaros)']
 release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
@@ -18,13 +18,12 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # Breathe configuration
-breathe_projects = {"ataraxis-micro-controller": "./doxygen/xml"}
-breathe_default_project = "ataraxis-micro-controller"
+breathe_projects = {"sl-micro-controllers": "./doxygen/xml"}
+breathe_default_project = "sl-micro-controllers"
 breathe_doxygen_config_options = {
     'ENABLE_PREPROCESSING': 'YES',
     'MACRO_EXPANSION': 'YES',
     'EXPAND_ONLY_PREDEF': 'NO',
-    'PREDEFINED': 'PACKED_STRUCT='
 }
 
 # -- Options for HTML output -------------------------------------------------
