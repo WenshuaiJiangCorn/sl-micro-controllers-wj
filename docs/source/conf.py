@@ -3,7 +3,7 @@
 # -- Project information -----------------------------------------------------
 project = 'sl-micro-controllers'
 # noinspection PyShadowingBuiltins
-copyright = '2024, Ivan Kondratyev (Inkaros) & Sun Lab'
+copyright = '2025, Ivan Kondratyev (Inkaros) & Sun Lab'
 authors = ['Ivan Kondratyev (Inkaros)']
 release = '1.0.0'
 

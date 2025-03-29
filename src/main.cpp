@@ -1,3 +1,14 @@
+// To upload the code to each of the target microcontrollers, modify the target microcontroller name on line 26 and
+// use platformio to compile and upload the project. When uploading the code, make sure only one
+// Teensy 4.1 is connected to the host-PC at the same time.
+
+// The microcontrollers assembled and configured as part of this project are designed to work with the Python
+// interfaces available from the sl-experiment project: https://github.com/Sun-Lab-NBB/sl-experiment.
+// See https://github.com/Sun-Lab-NBB/ataraxis-micro-controllers for more details on assembling the hardware and
+// installing the project.
+// API documentation: https://ataraxis-micro-controllers-api-docs.netlify.app/.
+// Author: Ivan Kondratyev (Inkaros).
+
 // Dependencies
 #include <Arduino.h>
 #include <axmc_shared_assets.h>
