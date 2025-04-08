@@ -1,4 +1,4 @@
-# ataraxis-micro-controllers
+# sl-micro-controllers
 
 This C++ project aggregates the code and documentation for all Ataraxis Micro Controllers (AXMCs) used in Sun (NeuroAI) 
 lab data acquisition pipelines.
@@ -75,7 +75,7 @@ ___
 ## Software Installation
 
 1. Download this repository to a local PC with direct USB access to the microcontrollers. Use the latest
-   stable release from [GitHub](https://github.com/Sun-Lab-NBB/ataraxis-micro-controllers/releases), as it always 
+   stable release from [GitHub](https://github.com/Sun-Lab-NBB/sl-micro-controllers/releases), as it always 
    reflects the current state of our data acquisition hardware.
 2. Open the project in the 'Platformio' IDE.
 3. Connect a ***single*** microcontroller to the host PC and select the microcontroller type by modifying the 
@@ -94,14 +94,14 @@ ___
 
 ## API Documentation
 
-See the [API documentation](https://ataraxis-micro-controllers-api-docs.netlify.app/) for the detailed description of
+See the [API documentation](https://sl-micro-controllers-api-docs.netlify.app/) for the detailed description of
 the methods and classes exposed by components of this library.
 ___
 
 ## Versioning
 
 We use [semantic versioning](https://semver.org/) for this project. For the versions available, see the
-[tags on this repository](https://github.com/Sun-Lab-NBB/ataraxis-micro-controllers/tags).
+[tags on this repository](https://github.com/Sun-Lab-NBB/sl-micro-controllers/tags).
 
 ---
 
