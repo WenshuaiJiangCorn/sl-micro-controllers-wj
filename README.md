@@ -9,28 +9,31 @@ ___
 
 ## Detailed Description
 
-This library builds on top of the general architecture defined by the 
+This project builds on top of the general architecture defined by the 
 [ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller) library to implement the hardware
-modules used in the Sun lab. This project is explicitly designed and built to work with the hardware made and used in 
-the lab, and will likely not work in other contexts without extensive modification. It is made public to serve as the 
-real-world example of how to use 'Ataraxis' libraries to acquire scientific data.
+modules used in the Sun lab. It is explicitly designed and built to work with the hardware made and used in the lab, and
+will likely not work in other contexts without extensive modification. The project is a good demonstration of how to use
+libraries developed as part of the context-agnostic 'Ataraxis' project to acquire scientific data.
 
 Note, the rest of this ReadMe assumes familiarity with the procedures, experiments, and tools used in the Sun lab
 to acquire scientific data. See our [publications](https://neuroai.github.io/sunlab/publications) before reading 
-further, if you are not familiar with the work done in the lab.
+further, if you are not familiar with the work done in the lab. All tools in the lab are purpose-built to support 
+ongoing and future projects in the lab and are specialized to work withing the constraints of using the 2-Photon Random 
+Access Mesoscope (2P-RAM).
 
 Currently, we use three microcontrollers as part of our behavior data acquisition pipeline: AMC-ACTOR, AMC-SENSOR, and 
 AMC-ENCODER. The Actor is used to interface with the hardware modules that control the experiment environment, for 
 example, to deliver water, lock running wheel, and activate Virtual Reality screens. The Sensor is used to monitor most 
 data-acquisition devices, such as torque sensor, lick sensor, and Mesoscope frame timestamp sensor. The Encoder uses 
-hardware interrupt logic to monitor the animal’s movement at a high frequency and resolution, which is necessary to
-properly update the Virtual Reality world used to facilitate experiments in the lab. Using this combination of 
-microcontrollers maximizes the data acquisition speed while avoiding communication channel overloading.
+hardware interrupt logic to monitor the animal’s movement at a high temporal and spatial resolution, which is necessary 
+to update the Virtual Reality world used to facilitate experiments in the lab. Using this combination of 
+microcontrollers maximizes the data acquisition speed while avoiding communication channel overloading and requires a 
+powerful PC to collect the raw data.
 
 This project contains both the schematics for assembling the microcontrollers used in the lab and the code that runs on
 these microcontrollers. The hardware created and programmed as part of this project is designed to be interfaced through
 the bindings available from the [sl-experiment](https://github.com/Sun-Lab-NBB/sl-experiment) library, which is a core
-dependency for every Sun lab project.
+dependency for every Sun lab data acquisition pipeline.
 ___
 
 ## Table of Contents
@@ -84,6 +87,9 @@ ___
 4. After uploading the code, disconnect the microcontroller from the host-PC and connect the next microcontroller.
 5. Repeat steps 3 and 4 until all microcontrollers are configured.
 6. Connect all microcontrollers to the PC that will manage the data acquisition runtime (in our case, the VRPC).
+
+***Note!*** The PC used to upload the code and the PC used to collect the data during runtime can be different. Once the
+code is uploaded to the microcontrollers, it is safe to cycle their power and connect them to different PCs.
 ___
 
 ## Usage
