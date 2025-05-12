@@ -153,14 +153,14 @@ class LickModule final : public Module
             const auto delta =
                 static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
 
-            previous_readout = signal;  // Overwrites the previous readout with the current signal.
-
             // Prevents reporting signals that are not significantly different from the previous readout value.
             if (delta <= _custom_parameters.delta_threshold)
             {
                 CompleteCommand();
                 return;
             }
+
+            previous_readout = signal;  // Overwrites the previous readout with the current signal
 
             // If the signal is above the threshold, sends it to the PC
             if (signal >= _custom_parameters.signal_threshold)

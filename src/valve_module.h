@@ -342,7 +342,7 @@ class ValveModule final : public Module
         void Tone()
         {
             // If the Tone pin is not configured, aborts the runtime and sends an error message to the PC.
-            if (kTonePin != 255)
+            if (kTonePin == 255)
             {
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kTonePinNotSet));
                 AbortCommand();

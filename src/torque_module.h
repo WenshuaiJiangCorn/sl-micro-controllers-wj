@@ -171,11 +171,6 @@ class TorqueModule final : public Module
                 return;
             }
 
-            // Note, this is different from the lick sensor, where the previous signal is set before delta calculation.
-            // This has to do with the sensitivity of each sensor and the magnitude of expected deltas. Lick sensor
-            // changes are very large and happen very rapidly, so it is better to have this setter before delta check.
-            // Torque changes are considerably slower and more gradual, so it is better to do the setting after the
-            // delta
             previous_readout = signal;  // Overwrites the previous readout with the current signal.
 
             // Determines the direction of the signal. Signals above the baseline are interpreted as CCW, signals below
