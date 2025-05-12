@@ -338,7 +338,7 @@ class ValveModule final : public Module
         }
 
         /// Cycles activating and inactivating the tone buzzer to deliver an audible tone of the predefined duration,
-        /// without changing thew current state of the valve.
+        /// without changing the current state of the valve.
         void Tone()
         {
             // If the Tone pin is not configured, aborts the runtime and sends an error message to the PC.
