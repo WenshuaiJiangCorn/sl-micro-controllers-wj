@@ -135,25 +135,23 @@ class LickModule final : public Module
             // significant change can be adjusted through the custom_parameters structure.
             static uint16_t previous_readout = 0;
 
-            // Tracks whether the previous message sent to the PC included a zero torque value. This is used to
+            // Tracks whether the previous message sent to the PC included a zero signal value. This is used to
             // eliminate repeated reporting of sub-threshold values pulled down to 0 to the PC. In turn, this conserves
             // communication bandwidth
             static bool previous_zero = false;
 
             // Evaluates the state of the pin. Averages the requested number of readouts to produce the final
             // analog signal value. Note, since we statically configure the controller to use 10-14 bit ADC resolution,
-            // this value should not use the full range of the 16-bit unit variable.
+            // this value should not use the full range of the 16-bit uint variable.
             const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
 
             // Calculates the absolute difference between the current signal and the previous readout. This is used
             // to ensure only significant signal changes are reported to the PC. Note, although we are casting both to
-            // int32 to support the delta calculation, the resultant delta will always be within the unit_16 range.
+            // int32 to support the delta calculation, the resultant delta will always be within the uint_16 range.
             // Therefore, it is fine to cast it back to uint16 to avoid unnecessary future casting in the 'if'
             // statements.
             const auto delta =
                 static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
-
-            previous_readout = signal;  // Overwrites the previous readout with the current signal.
 
             // Prevents reporting signals that are not significantly different from the previous readout value.
             if (delta <= _custom_parameters.delta_threshold)
@@ -161,6 +159,8 @@ class LickModule final : public Module
                 CompleteCommand();
                 return;
             }
+
+            previous_readout = signal;  // Overwrites the previous readout with the current signal
 
             // If the signal is above the threshold, sends it to the PC
             if (signal >= _custom_parameters.signal_threshold)

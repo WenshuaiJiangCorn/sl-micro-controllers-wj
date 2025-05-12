@@ -15,6 +15,7 @@ INPUT                  = src/break_module.h \
                          src/ttl_module.h \
                          src/valve_module.h
 GENERATE_XML           = YES
+GENERATE_LATEX         = NO
 XML_OUTPUT             = xml
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
