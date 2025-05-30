@@ -18,8 +18,8 @@ libraries developed as part of the context-agnostic 'Ataraxis' project to acquir
 Note, the rest of this ReadMe assumes familiarity with the procedures, experiments, and tools used in the Sun lab
 to acquire scientific data. See our [publications](https://neuroai.github.io/sunlab/publications) before reading 
 further, if you are not familiar with the work done in the lab. All tools in the lab are purpose-built to support 
-ongoing and future projects in the lab and are specialized to work withing the constraints of using the 2-Photon Random 
-Access Mesoscope (2P-RAM).
+ongoing and future projects in the lab and are primarily specialized to work within the constraints of using the 
+2-Photon Random Access Mesoscope (2P-RAM).
 
 Currently, we use three microcontrollers as part of our behavior data acquisition pipeline: AMC-ACTOR, AMC-SENSOR, and 
 AMC-ENCODER. The Actor is used to interface with the hardware modules that control the experiment environment, for 
