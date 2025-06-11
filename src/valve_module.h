@@ -241,6 +241,11 @@ class ValveModule final : public Module
             // Waits for the tone duration to pass
             if (execution_parameters.stage == 4)
             {
+                // While it should never be the case that the tone duration is below the pulse duration, the system
+                // can be configured like that due to a user error. In this case, advances to the next stage without
+                // any further blocking
+                if (_custom_parameters.tone_duration <= _custom_parameters.pulse_duration) AdvanceCommandStage();
+
                 // The tone has to be ON for at least 100 milliseconds, whereas the valve is usually opened for ~ 30
                 // milliseconds. Therefore, here we delay for the REMAINING tone duration after accounting for the
                 // pulse duration. This assumes that the method runs in blocking mode and there is negligible time
