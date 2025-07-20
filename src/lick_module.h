@@ -32,7 +32,7 @@
  * detects a positive change in voltage across the sensor. The detection threshold can be configured to distinguish
  * between dry and wet touch, which is used to separate limb contacts from tongue contacts.
  *
- * @note This class was calibrated to work for and tested on C57BL6J Wildtype and transgenic mice.
+ * @note This class was calibrated to work for and tested on C57BL6J Wild-type and transgenic mice.
  *
  * @tparam kPin the analog pin whose state will be monitored to detect licks.
  */
