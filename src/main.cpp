@@ -22,41 +22,29 @@ axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 // Initializes the serial communication class.
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
-// Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER.
-#define ACTOR
+// Defines the target microcontroller. Our VR system currently has 3 valid targets: ACTOR, SENSOR and ENCODER. 
+// WJ note: only ACTOR is currently used.
 
 // Resolves microcontroller-specific module configuration and layout
-#ifdef ACTOR
-#include "break_module.h"
-#include "screen_module.h"
+// Use the same controller as for valve and lick
+
 #include "valve_module.h"
+#include "lick_module.h"
 
 constexpr uint8_t kControllerID = 101;
-BreakModule<28, false, true> wheel_break(3, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<29, true, true, 9> reward_valve(5, 1, axmc_communication, DynamicRuntimeParameters);
-ScreenModule<15, 19, 23, true> screen_trigger(7, 1, axmc_communication, DynamicRuntimeParameters);
-Module* modules[] = {&wheel_break, &reward_valve, &screen_trigger};
 
-#elif defined SENSOR
-#include "lick_module.h"
-#include "torque_module.h"
-#include "ttl_module.h"
+ValveModule<6,  true, true, 255> reward_valve_1(5, 1, axmc_communication, DynamicRuntimeParameters);
+ValveModule<19, true, true, 255> reward_valve_2(5, 2, axmc_communication, DynamicRuntimeParameters);
 
-constexpr uint8_t kControllerID = 152;
-TTLModule<34, false, false> mesoscope_frame(1, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<21> lick_sensor(4, 1, axmc_communication, DynamicRuntimeParameters);
-TorqueModule<41, 2048, true> torque_sensor(6, 1, axmc_communication, DynamicRuntimeParameters);
-Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
+LickModule<3>  lick_sensor_1(4, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<22> lick_sensor_2(4, 2, axmc_communication, DynamicRuntimeParameters);
 
-#elif defined ENCODER
-#include "encoder_module.h"
-
-constexpr uint8_t kControllerID = 203;
-EncoderModule<33, 34, 35, true> wheel_encoder(2, 1, axmc_communication, DynamicRuntimeParameters);
-Module *modules[] = {&wheel_encoder};
-#else
-static_assert(false, "Define one of the supported microcontroller targets (ACTOR, SENSOR, ENCODER).");
-#endif
+Module* modules[] = {
+    &reward_valve_1,
+    &reward_valve_2,
+    &lick_sensor_1,
+    &lick_sensor_2
+};
 
 // Instantiates the Kernel class using the assets instantiated above.
 Kernel axmc_kernel(kControllerID, axmc_communication, DynamicRuntimeParameters, modules);
@@ -67,6 +55,8 @@ void setup()
 
 // Disables unused 3.3V pins hooked up to the 3-5 V voltage shifter. If this is not done, the shifter will output a
 // HIGH signal from non-disabled pins.
+
+/*
 #ifdef ACTOR
     pinMode(33, OUTPUT);
     digitalWrite(35, LOW);
@@ -77,19 +67,8 @@ void setup()
     pinMode(36, OUTPUT);
     digitalWrite(36, LOW);
 
-#elif defined SENSOR
-    pinMode(33, OUTPUT);
-    digitalWrite(33, LOW);
-    pinMode(35, OUTPUT);
-    digitalWrite(35, LOW);
-    pinMode(36, OUTPUT);
-    digitalWrite(36, LOW);
-
-#elif defined ENCODER
-    pinMode(36, OUTPUT);
-    digitalWrite(36, LOW);
 #endif
-
+*/
     // Sets ADC resolution to 12 bits. Teensy boards can support up to 16 bits, but 12 often produces cleaner readouts.
     analogReadResolution(12);
 
