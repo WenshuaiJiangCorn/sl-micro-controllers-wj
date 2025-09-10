@@ -41,20 +41,14 @@
  * @tparam kStartClosed determines the initial state of the valve during class initialization. This works
  * together with kNormallyClosed parameter to deliver the desired initial voltage level for the valve to either be
  * opened or closed after hardware initialization.
- * @tparam kTonePin the digital pin connected to the tone buzzer's FET-gated relay.
  */
-template <const uint8_t kPin, const bool kNormallyClosed, const bool kStartClosed = true, const uint8_t kTonePin = 255>
+template <const uint8_t kPin, const bool kNormallyClosed, const bool kStartClosed = true>
 class ValveModule final : public Module
 {
         // Ensures that the valve pin does not interfere with LED pin.
         static_assert(
             kPin != LED_BUILTIN,
             "LED-connected pin is reserved for LED manipulation. Select a different valve pin for ValveModule instance."
-        );
-        // Ensures that the tone pin does not interfere with LED pin.
-        static_assert(
-            kTonePin != LED_BUILTIN,
-            "LED-connected pin is reserved for LED manipulation. Select a different tone pin for ValveModule instance."
         );
 
     public:
@@ -118,8 +112,6 @@ class ValveModule final : public Module
                 case kModuleCommands::kToggleOff: Close(); return true;
                 // Calibrate
                 case kModuleCommands::kCalibrate: Calibrate(); return true;
-                // Tone
-                case kModuleCommands::kTonePulse: Tone(); return true;
                 // Unrecognized command
                 default: return false;
             }
@@ -130,8 +122,6 @@ class ValveModule final : public Module
         {
             // Sets pin modes to OUTPUT
             pinModeFast(kPin, OUTPUT);
-            pinModeFast(kTonePin, OUTPUT);
-            digitalWriteFast(kTonePin, LOW);  // Ensures the TONE pin starts low
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));
 
             // Based on the requested initial valve state and the configuration of the valve (normally closed or open),
@@ -189,14 +179,6 @@ class ValveModule final : public Module
                 {
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
 
-                    // If the valve is successfully opened and the class is configured to deliver audible tones during
-                    // pulses, also activates the tone buzzer.
-                    if (kTonePin != 255)
-                    {
-                        digitalWriteFast(kTonePin, HIGH);
-                        SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOn));
-                    }
-
                     AdvanceCommandStage();
                 }
                 else
@@ -226,8 +208,7 @@ class ValveModule final : public Module
                 if (DigitalWrite(kPin, kClose, false))
                 {
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kClosed));
-                    if (kTonePin == 255) CompleteCommand();  // If tone is not used, finishes command execution
-                    else AdvanceCommandStage();  // Otherwise, advances the command stage to resolve tone duration
+                    CompleteCommand();  // Finishes command execution
                 }
                 else
                 {
@@ -236,30 +217,6 @@ class ValveModule final : public Module
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
                     AbortCommand();  // Aborts the current and all future command executions.
                 }
-            }
-
-            // Waits for the tone duration to pass
-            if (execution_parameters.stage == 4)
-            {
-                // While it should never be the case that the tone duration is below the pulse duration, the system
-                // can be configured like that due to a user error. In this case, advances to the next stage without
-                // any further blocking
-                if (_custom_parameters.tone_duration <= _custom_parameters.pulse_duration) AdvanceCommandStage();
-
-                // The tone has to be ON for at least 100 milliseconds, whereas the valve is usually opened for ~ 30
-                // milliseconds. Therefore, here we delay for the REMAINING tone duration after accounting for the
-                // pulse duration. This assumes that the method runs in blocking mode and there is negligible time
-                // loss between the end of the valve pulse duration and this wait function call.
-                if (!WaitForMicros(_custom_parameters.tone_duration - _custom_parameters.pulse_duration)) return;
-                AdvanceCommandStage();
-            }
-
-            // Deactivates the tone
-            if (execution_parameters.stage == 5)
-            {
-                digitalWriteFast(kTonePin, LOW);                               // Ensures the tone is turned OFF
-                SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));  // Notifies the PC
-                CompleteCommand();                                             // Finishes command execution
             }
         }
 
@@ -340,63 +297,6 @@ class ValveModule final : public Module
             // This command completes after running the requested number of cycles.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kCalibrated));
             CompleteCommand();
-        }
-
-        /// Cycles activating and inactivating the tone buzzer to deliver an audible tone of the predefined duration,
-        /// without changing the current state of the valve.
-        void Tone()
-        {
-            // If the Tone pin is not configured, aborts the runtime and sends an error message to the PC.
-            if (kTonePin == 255)
-            {
-                SendData(static_cast<uint8_t>(kCustomStatusCodes::kTonePinNotSet));
-                AbortCommand();
-                return;
-            }
-
-            // Starts the Tone by activating the buzzer
-            if (execution_parameters.stage == 1)
-            {
-                if (DigitalWrite(kTonePin, HIGH, false))
-                {
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOn));
-                    AdvanceCommandStage();
-                }
-                else
-                {
-                    // If writing to actor pins is globally disabled, as indicated by DigitalWrite returning false,
-                    // sends an error message to the PC and aborts the runtime.
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
-                    AbortCommand();
-                    return;
-                }
-            }
-
-            // Sounds the tone for the required duration of microseconds
-            if (execution_parameters.stage == 2)
-            {
-                // Blocks for the tone_duration of microseconds, relative to the time of the last AdvanceCommandStage()
-                // call.
-                if (!WaitForMicros(_custom_parameters.tone_duration)) return;
-                AdvanceCommandStage();
-            }
-
-            // Deactivates the tone
-            if (execution_parameters.stage == 3)
-            {
-                // Once the tone duration has passed, inactivates the pin by setting it to LOW. Finishes
-                // command execution if inactivation is successful.
-                if (DigitalWrite(kTonePin, LOW, false))
-                {
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));
-                    CompleteCommand();
-                }
-                else
-                {
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kOutputLocked));
-                    AbortCommand();
-                }
-            }
         }
 };
 

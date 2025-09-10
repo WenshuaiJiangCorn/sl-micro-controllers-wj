@@ -31,44 +31,29 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 #include "valve_module.h"
 #include "lick_module.h"
 
-constexpr uint8_t kControllerID = 101;
+constexpr uint8_t kControllerID = 111;
+constexpr uint32_t kKeepAliveInterval = 1000;  // 1 second == 1000 ms
 
-ValveModule<6,  true, true, 255> reward_valve_1(5, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<19, true, true, 255> reward_valve_2(5, 2, axmc_communication, DynamicRuntimeParameters);
+ValveModule<6,  true, true> right_valve(101, 1, axmc_communication, DynamicRuntimeParameters);
+ValveModule<19, true, true> left_valve(101, 2, axmc_communication, DynamicRuntimeParameters);
 
-LickModule<3>  lick_sensor_1(4, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<22> lick_sensor_2(4, 2, axmc_communication, DynamicRuntimeParameters);
+LickModule<3>  right_lick_sensor(102, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<22> left_lick_sensor(102, 2, axmc_communication, DynamicRuntimeParameters);
 
 Module* modules[] = {
-    &reward_valve_1,
-    &reward_valve_2,
-    &lick_sensor_1,
-    &lick_sensor_2
+    &right_valve,
+    &left_valve,
+    &right_lick_sensor,
+    &left_lick_sensor
 };
 
 // Instantiates the Kernel class using the assets instantiated above.
-Kernel axmc_kernel(kControllerID, axmc_communication, DynamicRuntimeParameters, modules);
+Kernel axmc_kernel(kControllerID, axmc_communication, DynamicRuntimeParameters, modules, kKeepAliveInterval);
 
 void setup()
 {
     Serial.begin(115200);  // The baudrate is ignored for teensy boards.
 
-// Disables unused 3.3V pins hooked up to the 3-5 V voltage shifter. If this is not done, the shifter will output a
-// HIGH signal from non-disabled pins.
-
-/*
-#ifdef ACTOR
-    pinMode(33, OUTPUT);
-    digitalWrite(35, LOW);
-    pinMode(34, OUTPUT);
-    digitalWrite(36, LOW);
-    pinMode(35, OUTPUT);
-    digitalWrite(35, LOW);
-    pinMode(36, OUTPUT);
-    digitalWrite(36, LOW);
-
-#endif
-*/
     // Sets ADC resolution to 12 bits. Teensy boards can support up to 16 bits, but 12 often produces cleaner readouts.
     analogReadResolution(12);
 
