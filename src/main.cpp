@@ -34,11 +34,11 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 constexpr uint8_t kControllerID = 111;
 constexpr uint32_t kKeepAliveInterval = 1000;  // 1 second == 1000 ms
 
-ValveModule<6,  true, true> right_valve(101, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<19, true, true> left_valve(101, 2, axmc_communication, DynamicRuntimeParameters);
+ValveModule<16, true, true> left_valve(101, 1, axmc_communication, DynamicRuntimeParameters);
+ValveModule<9,  true, true> right_valve(101, 2, axmc_communication, DynamicRuntimeParameters);
 
-LickModule<3>  right_lick_sensor(102, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<22> left_lick_sensor(102, 2, axmc_communication, DynamicRuntimeParameters);
+LickModule<22> left_lick_sensor(102, 1, axmc_communication, DynamicRuntimeParameters);
+LickModule<3>  right_lick_sensor(102, 2, axmc_communication, DynamicRuntimeParameters);
 
 Module* modules[] = {
     &right_valve,
