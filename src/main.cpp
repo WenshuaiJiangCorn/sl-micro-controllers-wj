@@ -30,6 +30,7 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
 #include "valve_module.h"
 #include "lick_module.h"
+#include "analog_module.h"
 
 constexpr uint8_t kControllerID = 111;
 constexpr uint32_t kKeepAliveInterval = 1000;  // 1 second == 1000 ms
@@ -40,11 +41,14 @@ ValveModule<9,  true, true> right_valve(101, 2, axmc_communication, DynamicRunti
 LickModule<22> left_lick_sensor(102, 1, axmc_communication, DynamicRuntimeParameters);
 LickModule<3>  right_lick_sensor(102, 2, axmc_communication, DynamicRuntimeParameters);
 
+AnalogModule<11> photometry_sensor(103, 1, axmc_communication, DynamicRuntimeParameters);
+
 Module* modules[] = {
     &right_valve,
     &left_valve,
     &right_lick_sensor,
-    &left_lick_sensor
+    &left_lick_sensor,
+    &photometry_sensor
 };
 
 // Instantiates the Kernel class using the assets instantiated above.
