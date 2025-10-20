@@ -199,3 +199,5 @@ cython_debug/
 # Docs directory
 /docs/source/doxygen/
 /docs/source/doxygen
+.vscode/launch.json
+.vscode/c_cpp_properties.json
