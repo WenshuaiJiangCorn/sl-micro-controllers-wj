@@ -11,13 +11,9 @@
 
 // Dependencies
 #include <Arduino.h>
-#include <axmc_shared_assets.h>
 #include <communication.h>
 #include <kernel.h>
 #include <module.h>
-
-// Initializes the shared microcontroller parameter structure. This structure is used by all microcontroller types.
-axmc_shared_assets::DynamicRuntimeParameters DynamicRuntimeParameters;
 
 // Initializes the serial communication class.
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
@@ -35,24 +31,24 @@ Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 constexpr uint8_t kControllerID = 111;
 constexpr uint32_t kKeepAliveInterval = 1000;  // 1 second == 1000 ms
 
-ValveModule<16, true, true> left_valve(101, 1, axmc_communication, DynamicRuntimeParameters);
-ValveModule<9,  true, true> right_valve(101, 2, axmc_communication, DynamicRuntimeParameters);
+ValveModule<16, true> left_valve(1, 1, axmc_communication);
+ValveModule<9,  true> right_valve(1, 2, axmc_communication);
 
-LickModule<22> left_lick_sensor(102, 1, axmc_communication, DynamicRuntimeParameters);
-LickModule<3>  right_lick_sensor(102, 2, axmc_communication, DynamicRuntimeParameters);
+LickModule<22> left_lick_sensor(2, 1, axmc_communication);
+LickModule<3>  right_lick_sensor(2, 2, axmc_communication);
 
-AnalogModule<11> analog_signal(103, 1, axmc_communication, DynamicRuntimeParameters);
+AnalogModule<11> analog_signal(3, 1, axmc_communication);
 
 Module* modules[] = {
-    &right_valve,
     &left_valve,
-    &right_lick_sensor,
+    &right_valve,
     &left_lick_sensor,
+    &right_lick_sensor,
     &analog_signal
 };
 
 // Instantiates the Kernel class using the assets instantiated above.
-Kernel axmc_kernel(kControllerID, axmc_communication, DynamicRuntimeParameters, modules, kKeepAliveInterval);
+Kernel axmc_kernel(kControllerID, axmc_communication, modules, kKeepAliveInterval);
 
 void setup()
 {

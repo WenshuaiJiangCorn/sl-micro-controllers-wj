@@ -8,8 +8,8 @@
 #ifndef ANALOG_MODULE_WJ
 #define ANALOG_MODULE_WJ
 
+#include <cstdint>
 #include <Arduino.h>
-#include <axmc_shared_assets.h>
 #include <digitalWriteFast.h>
 #include <module.h>
 
@@ -37,12 +37,8 @@ class AnalogModule final : public Module
 
         /// Initializes the AnalogModule class by subclassing the base Module class.
         AnalogModule(
-            const uint8_t module_type,
-            const uint8_t module_id,
-            Communication& communication,
-            const axmc_shared_assets::DynamicRuntimeParameters& dynamic_parameters
-        ) :
-            Module(module_type, module_id, communication, dynamic_parameters)
+            const uint8_t module_type, const uint8_t module_id, Communication& communication) :
+            Module(module_type, module_id, communication)
         {}
 
         /// Overwrites the custom_parameters structure memory with the data extracted from the Communication
@@ -82,7 +78,7 @@ class AnalogModule final : public Module
             // time-alignment during post-processing.
             SendData(
                 static_cast<uint8_t>(kCustomStatusCodes::kNonZero),
-                axmc_communication_assets::kPrototypes::kOneUint16,
+                kPrototypes::kOneUint16,
                 0
             );
 
@@ -120,7 +116,7 @@ class AnalogModule final : public Module
                 // Sends the detected signal to the PC.
                 SendData(
                     static_cast<uint8_t>(kCustomStatusCodes::kNonZero),
-                    axmc_communication_assets::kPrototypes::kOneUint16,
+                    kPrototypes::kOneUint16,
                     signal
                 );
             }

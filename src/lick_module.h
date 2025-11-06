@@ -17,8 +17,8 @@
 #ifndef AXMC_LICK_MODULE_H
 #define AXMC_LICK_MODULE_H
 
+#include <cstdint>
 #include <Arduino.h>
-#include <axmc_shared_assets.h>
 #include <digitalWriteFast.h>
 #include <module.h>
 
@@ -62,13 +62,8 @@ class LickModule final : public Module
         };
 
         /// Initializes the TTLModule class by subclassing the base Module class.
-        LickModule(
-            const uint8_t module_type,
-            const uint8_t module_id,
-            Communication& communication,
-            const axmc_shared_assets::DynamicRuntimeParameters& dynamic_parameters
-        ) :
-            Module(module_type, module_id, communication, dynamic_parameters)
+        LickModule(const uint8_t module_type, const uint8_t module_id, Communication& communication) :
+            Module(module_type, module_id, communication)
         {}
 
         /// Overwrites the custom_parameters structure memory with the data extracted from the Communication
@@ -109,7 +104,7 @@ class LickModule final : public Module
             // time-alignment during post-processing.
             SendData(
                 static_cast<uint8_t>(kCustomStatusCodes::kChanged),
-                axmc_communication_assets::kPrototypes::kOneUint16,
+                kPrototypes::kOneUint16,
                 0
             );
 
@@ -135,15 +130,13 @@ class LickModule final : public Module
             // significant change can be adjusted through the custom_parameters structure.
             static uint16_t previous_readout = 0;
 
-            // Tracks whether the previous message sent to the PC included a zero signal value. This is used to
-            // eliminate repeated reporting of sub-threshold values pulled down to 0 to the PC. In turn, this conserves
-            // communication bandwidth
-            static bool previous_zero = false;
+            // Tracks whether the previous message sent to the PC included a zero signal value.
+            static bool previous_zero = true;  // A zero-message is sent at class initialization.
 
             // Evaluates the state of the pin. Averages the requested number of readouts to produce the final
             // analog signal value. Note, since we statically configure the controller to use 10-14 bit ADC resolution,
             // this value should not use the full range of the 16-bit uint variable.
-            const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
+            const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size); 
 
             // Calculates the absolute difference between the current signal and the previous readout. This is used
             // to ensure only significant signal changes are reported to the PC. Note, although we are casting both to
@@ -168,7 +161,7 @@ class LickModule final : public Module
                 // Sends the detected signal to the PC.
                 SendData(
                     static_cast<uint8_t>(kCustomStatusCodes::kChanged),
-                    axmc_communication_assets::kPrototypes::kOneUint16,
+                    kPrototypes::kOneUint16,
                     signal
                 );
                 previous_zero = false;
@@ -181,7 +174,7 @@ class LickModule final : public Module
                 {
                     SendData(
                         static_cast<uint8_t>(kCustomStatusCodes::kChanged),
-                        axmc_communication_assets::kPrototypes::kOneUint16,
+                        kPrototypes::kOneUint16,
                         0
                     );
                     previous_zero = true;
