@@ -128,7 +128,7 @@ class ValveModule final : public Module
 
             // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.pulse_duration    = 35000;  // ~ 5.0 uL of water in the current Sun lab system.
-            _custom_parameters.calibration_count = 500;    // The valve is pulsed 500 times during calibration.
+            _custom_parameters.calibration_count = 200;    // The valve is pulsed 500 times during calibration.
 
             return true;
         }
@@ -140,7 +140,7 @@ class ValveModule final : public Module
         struct CustomRuntimeParameters
         {
                 uint32_t pulse_duration    = 35000;   ///< The time, in microseconds, to keep the valve open.
-                uint16_t calibration_count = 500;     ///< The number of times to pulse the valve during calibration.
+                uint16_t calibration_count = 200;     ///< The number of times to pulse the valve during calibration.
         } PACKED_STRUCT _custom_parameters;
 
         /// Stores the digital signal that needs to be sent to the valve pin to open the valve.
