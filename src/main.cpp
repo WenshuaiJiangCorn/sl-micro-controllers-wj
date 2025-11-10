@@ -35,9 +35,9 @@ ValveModule<16, true> left_valve(1, 1, axmc_communication);
 ValveModule<9,  true> right_valve(1, 2, axmc_communication);
 
 LickModule<22> left_lick_sensor(2, 1, axmc_communication);
-LickModule<3>  right_lick_sensor(2, 2, axmc_communication);
+LickModule<23>  right_lick_sensor(2, 2, axmc_communication);
 
-AnalogModule<11> analog_signal(3, 1, axmc_communication);
+AnalogModule<14> analog_signal(3, 1, axmc_communication);
 
 Module* modules[] = {
     &left_valve,
