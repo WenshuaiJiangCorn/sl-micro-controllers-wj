@@ -97,7 +97,7 @@ class LickModule final : public Module
 
             // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
             _custom_parameters.signal_threshold  = 200;  // Ideally should be just high enough to filter out noise
-            _custom_parameters.delta_threshold   = 120;  // Ideally should be at least half of the minimal threshold
+            _custom_parameters.delta_threshold   = 100;  // Ideally should be at least half of the minimal threshold
             _custom_parameters.average_pool_size = 0;    // Better to have at 0 because Teensy already does this
 
             // Notifies the PC about the initial sensor state. Primarily, this is needed to support data source
@@ -118,7 +118,7 @@ class LickModule final : public Module
         struct CustomRuntimeParameters
         {
                 uint16_t signal_threshold = 200;  ///< The lower boundary for signals to be reported to PC.
-                uint16_t delta_threshold  = 120;  ///< The minimum difference between checks to be reported to PC.
+                uint16_t delta_threshold  = 100;  ///< The minimum difference between checks to be reported to PC.
                 uint8_t average_pool_size = 0;    ///< The number of readouts to average into pin state value.
         } PACKED_STRUCT _custom_parameters;
 
