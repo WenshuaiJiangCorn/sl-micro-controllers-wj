@@ -200,3 +200,4 @@ cython_debug/
 /docs/source/doxygen/
 /docs/source/doxygen
 
+/.vscode
